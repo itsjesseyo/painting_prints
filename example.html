@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixelated Beading Pattern</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .canvas-section {
+            text-align: center;
+        }
+        
+        .canvas-section h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            border-radius: 5px;
+            background: white;
+            cursor: crosshair;
+        }
+        
+        .perspective-mode {
+            border-color: #ff6b6b !important;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+        
+        .perspective-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .main-controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .control-section {
+            margin: 15px 0;
+            padding: 15px 0;
+        }
+        
+        .control-section:not(:last-child) {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .control-section h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .grid-size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 2px solid #dee2e6;
+        }
+        
+        .grid-size-control label {
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+        }
+        
+        
+        .grid-size-slider {
+            width: 120px;
+        }
+        
+        .checkbox-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+        }
+        
+        .checkbox-control:hover {
+            border-color: #007bff;
+        }
+        
+        .checkbox-control input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+        
+        .checkbox-control label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            font-size: 16px;
+            padding: 14px 28px;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 6px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            color: #6c757d;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background: #e9ecef;
+            color: #495057;
+            border-color: #adb5bd;
+            transform: scale(1.1);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .advanced-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .advanced-section h3 {
+            margin: 0 0 15px 0;
+            color: #856404;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .mode-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-left: 10px;
+        }
+        
+        .mode-lens {
+            background: #e7f3ff;
+            color: #0066cc;
+        }
+        
+        .mode-perspective {
+            background: #ffe7e7;
+            color: #cc0000;
+        }
+        
+        .advanced-controls {
+            display: none;
+        }
+        
+        .advanced-controls.show {
+            display: block;
+        }
+        
+        .advanced-tool {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .advanced-tool h5 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .advanced-tool p {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        
+        .info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            color: #666;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .upload-label {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+        }
+        
+        .upload-label:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pixelated Beading Pattern Generator</h1>
+        
+        <div class="main-controls">
+            <div class="control-section">
+                <h4>Start Here</h4>
+                <div class="control-group">
+                    <label for="fileInput" class="upload-label btn-success">📁 Upload Your Image</label>
+                    <input type="file" id="fileInput" accept="image/*">
+                    <button onclick="downloadPattern()" class="btn-primary">💾 Download Pattern</button>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h4>Pattern Settings</h4>
+                <div class="control-group">
+                    <div class="grid-size-control">
+                        <label>Grid Size:</label>
+                        <span id="gridSizeValue2">60</span>
+                        <span>×</span>
+                        <span id="gridSizeValue">60</span>
+                        <input type="range" id="gridSize" class="grid-size-slider" min="8" max="80" value="60" oninput="updateGridSize()">
+                    </div>
+                    
+                    <div class="checkbox-control">
+                        <input type="checkbox" id="circularCrop" checked>
+                        <label for="circularCrop">🔵 Crop to Circle</label>
+                    </div>
+                    
+                    <button id="advancedBtn" onclick="toggleAdvanced()" class="btn-icon" title="Advanced Tools: Perspective & lens distortion correction for photos taken at angles or with camera distortion">⚙️</button>
+                </div>
+                <span id="modeIndicator" class="mode-indicator" style="display: none;"></span>
+            </div>
+        </div>
+        
+        <div id="advancedSection" class="advanced-section advanced-controls">
+            <h3>🔧 Advanced Image Correction Tools</h3>
+            
+            <div class="advanced-tool">
+                <h5>📐 Perspective Correction</h5>
+                <p>Fix photos taken at an angle by selecting 4 corners of your subject</p>
+                <div class="control-group">
+                    <button id="perspectiveBtn" onclick="togglePerspectiveMode()" disabled>Upload image first</button>
+                    <button id="correctBtn" onclick="correctPerspective()" disabled style="display: none;" class="btn-success">Apply Correction</button>
+                    <button id="resetBtn" onclick="resetPerspective()" disabled style="display: none;" class="btn-danger">Reset</button>
+                </div>
+            </div>
+            
+            <div class="advanced-tool">
+                <h5>🔍 Lens Distortion Correction</h5>
+                <p>Fix barrel/pincushion distortion by dragging grid points to outline a rectangle</p>
+                <div class="control-group">
+                    <button id="lensBtn" onclick="toggleLensCorrection()" disabled>Upload image first</button>
+                </div>
+                <div id="lensControls" style="display: none; margin-top: 10px;">
+                    <p style="margin: 5px 0; font-size: 13px; color: #666;">
+                        Drag the grid points to outline the rectangle you want to extract and straighten
+                    </p>
+                    <div class="control-group">
+                        <button onclick="applyGridCorrection()" class="btn-success">Apply Correction</button>
+                        <button onclick="resetLensCorrection()" class="btn-secondary">Reset Grid</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <div class="canvas-section">
+                <h3 id="originalTitle">Original</h3>
+                <div class="canvas-wrapper">
+                    <canvas id="originalCanvas"></canvas>
+                    <div id="perspectivePoints"></div>
+                </div>
+            </div>
+            
+            <div class="canvas-section">
+                <h3 id="pixelatedTitle">60x60 Pixelated with Grid</h3>
+                <canvas id="pixelatedCanvas" width="600" height="600"></canvas>
+            </div>
+        </div>
+        
+        <div class="info">
+            <p><strong>Instructions:</strong> Upload your image to create a pixelated beading pattern. Adjust the grid size from 8x8 to 80x80 beads. Use "Fix Lens Distortion" to extract and straighten a rectangular area by dragging the grid to outline it. Use "Perspective Correction" for additional fine-tuning. Toggle "Crop to Circle" for circular patterns.</p>
+            <p>Each square represents one bead. Perfect for both circular and square beading projects.</p>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const circularCropCheckbox = document.getElementById('circularCrop');
+        const gridSizeSlider = document.getElementById('gridSize');
+        const gridSizeValue = document.getElementById('gridSizeValue');
+        const gridSizeValue2 = document.getElementById('gridSizeValue2');
+        const originalCanvas = document.getElementById('originalCanvas');
+        const pixelatedCanvas = document.getElementById('pixelatedCanvas');
+        const originalCtx = originalCanvas.getContext('2d');
+        const pixelatedCtx = pixelatedCanvas.getContext('2d');
+        const originalTitle = document.getElementById('originalTitle');
+        const pixelatedTitle = document.getElementById('pixelatedTitle');
+        const perspectiveBtn = document.getElementById('perspectiveBtn');
+        const lensBtn = document.getElementById('lensBtn');
+        const lensControls = document.getElementById('lensControls');
+        const correctBtn = document.getElementById('correctBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const perspectivePoints = document.getElementById('perspectivePoints');
+        const advancedBtn = document.getElementById('advancedBtn');
+        const advancedSection = document.getElementById('advancedSection');
+        const modeIndicator = document.getElementById('modeIndicator');
+        
+        // Global variables
+        let currentImageData = null;
+        let currentImage = null;
+        let originalImageData = null;
+        let lensImageData = null;
+        let perspectiveMode = false;
+        let lensMode = false;
+        let selectedPoints = [];
+        
+        // Grid distortion variables
+        let gridPoints = [];
+        let draggedPoint = null;
+        let isDragging = false;
+
+        // Event listeners
+        fileInput.addEventListener('change', handleFileUpload);
+        circularCropCheckbox.addEventListener('change', handleCropToggle);
+        originalCanvas.addEventListener('click', handleCanvasClick);
+        originalCanvas.addEventListener('mousedown', handleMouseDown);
+        originalCanvas.addEventListener('mousemove', handleMouseMove);
+        originalCanvas.addEventListener('mouseup', handleMouseUp);
+        
+        function updateGridSize() {
+            const size = parseInt(gridSizeSlider.value);
+            gridSizeValue.textContent = size;
+            gridSizeValue2.textContent = size;
+            pixelatedTitle.textContent = `${size}x${size} Pixelated with Grid`;
+            
+            // Update canvas size to maintain 10px per grid cell
+            const canvasSize = size * 10;
+            pixelatedCanvas.width = canvasSize;
+            pixelatedCanvas.height = canvasSize;
+            
+            if (currentImage) {
+                processImage();
+            }
+        }
+        
+        function toggleAdvanced() {
+            const isVisible = advancedSection.classList.contains('show');
+            if (isVisible) {
+                advancedSection.classList.remove('show');
+                advancedBtn.textContent = '⚙️';
+                advancedBtn.title = 'Advanced Tools: Perspective & lens distortion correction for photos taken at angles or with camera distortion';
+                
+                // Exit any active modes
+                if (perspectiveMode) {
+                    togglePerspectiveMode();
+                }
+                if (lensMode) {
+                    toggleLensCorrection();
+                }
+            } else {
+                advancedSection.classList.add('show');
+                advancedBtn.textContent = '✖️';
+                advancedBtn.title = 'Hide Advanced Tools';
+            }
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        currentImage = img;
+                        originalImageData = null;
+                        
+                        if (!perspectiveMode) {
+                            selectedPoints = [];
+                            clearPerspectivePoints();
+                        }
+                        
+                        updateUI();
+                        processImage();
+                        perspectiveBtn.disabled = false;
+                        perspectiveBtn.textContent = 'Enable Perspective Mode';
+                        lensBtn.disabled = false;
+                        lensBtn.textContent = 'Enable Lens Correction';
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleCropToggle() {
+            if (currentImage && !perspectiveMode && !lensMode) {
+                processImage();
+            }
+        }
+
+        function handleCanvasClick(e) {
+            if (perspectiveMode && selectedPoints.length < 4) {
+                const rect = originalCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                selectedPoints.push({x, y});
+                addPerspectivePoint(x, y, selectedPoints.length);
+                updateUI();
+            }
+        }
+
+        function handleMouseDown(e) {
+            if (!lensMode) return;
+            
+            const rect = originalCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Find nearest grid point
+            const nearestPoint = findNearestGridPoint(mouseX, mouseY);
+            if (nearestPoint && getDistance(mouseX, mouseY, nearestPoint.x, nearestPoint.y) < 15) {
+                draggedPoint = nearestPoint;
+                isDragging = true;
+                originalCanvas.style.cursor = 'grabbing';
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!lensMode) return;
+            
+            const rect = originalCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            if (isDragging && draggedPoint) {
+                // Update dragged point position
+                draggedPoint.x = mouseX;
+                draggedPoint.y = mouseY;
+                processImage(); // Redraw with updated grid
+            } else {
+                // Change cursor if hovering over a grid point
+                const nearestPoint = findNearestGridPoint(mouseX, mouseY);
+                if (nearestPoint && getDistance(mouseX, mouseY, nearestPoint.x, nearestPoint.y) < 15) {
+                    originalCanvas.style.cursor = 'grab';
+                } else {
+                    originalCanvas.style.cursor = 'default';
+                }
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                draggedPoint = null;
+                originalCanvas.style.cursor = 'default';
+                // Remove auto-apply - user will click "Apply Correction" when ready
+                processImage(); // Just redraw the grid, don't apply correction
+            }
+        }
+
+        function setCanvasSize() {
+            if (!currentImage) return;
+
+            if (perspectiveMode || lensMode) {
+                const maxSize = 400;
+                const imgAspect = currentImage.width / currentImage.height;
+                
+                let canvasWidth, canvasHeight;
+                if (imgAspect > 1) {
+                    canvasWidth = Math.min(maxSize, currentImage.width);
+                    canvasHeight = canvasWidth / imgAspect;
+                } else {
+                    canvasHeight = Math.min(maxSize, currentImage.height);
+                    canvasWidth = canvasHeight * imgAspect;
+                }
+                
+                originalCanvas.width = canvasWidth;
+                originalCanvas.height = canvasHeight;
+            } else {
+                originalCanvas.width = 300;
+                originalCanvas.height = 300;
+            }
+        }
+
+        function processImage() {
+            if (!currentImage) return;
+
+            setCanvasSize();
+            
+            originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+            pixelatedCtx.clearRect(0, 0, pixelatedCanvas.width, pixelatedCanvas.height);
+            
+            let imageToProcess = currentImage;
+            
+            if (originalImageData) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = originalImageData.width;
+                tempCanvas.height = originalImageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(originalImageData, 0, 0);
+                imageToProcess = tempCanvas;
+            } else if (lensImageData) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = lensImageData.width;
+                tempCanvas.height = lensImageData.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(lensImageData, 0, 0);
+                imageToProcess = tempCanvas;
+            }
+            
+            drawOriginalImage(imageToProcess);
+            createPixelatedPattern(imageToProcess);
+        }
+
+        function drawOriginalImage(img) {
+            if (perspectiveMode || lensMode) {
+                originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+                
+                // Draw distortion grid in lens mode
+                if (lensMode) {
+                    drawDistortionGrid();
+                }
+            } else {
+                const useCircularCrop = circularCropCheckbox.checked;
+                if (useCircularCrop) {
+                    drawCircularImage(img);
+                } else {
+                    drawFittedImage(img);
+                }
+            }
+        }
+
+        function drawCircularImage(img) {
+            originalCtx.save();
+            
+            const centerX = originalCanvas.width / 2;
+            const centerY = originalCanvas.height / 2;
+            const radius = Math.min(originalCanvas.width, originalCanvas.height) / 2;
+            
+            originalCtx.beginPath();
+            originalCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            originalCtx.clip();
+            
+            drawFittedImage(img);
+            originalCtx.restore();
+        }
+
+        function drawFittedImage(img) {
+            let imgWidth = img.width || img.videoWidth || originalCanvas.width;
+            let imgHeight = img.height || img.videoHeight || originalCanvas.height;
+            
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = originalCanvas.width / originalCanvas.height;
+            
+            let drawWidth, drawHeight, drawX, drawY;
+            
+            if (imgAspect > canvasAspect) {
+                drawHeight = originalCanvas.height;
+                drawWidth = drawHeight * imgAspect;
+                drawX = (originalCanvas.width - drawWidth) / 2;
+                drawY = 0;
+            } else {
+                drawWidth = originalCanvas.width;
+                drawHeight = drawWidth / imgAspect;
+                drawX = 0;
+                drawY = (originalCanvas.height - drawHeight) / 2;
+            }
+            
+            originalCtx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        }
+
+        function createPixelatedPattern(img) {
+            const gridSize = parseInt(gridSizeSlider.value);
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = gridSize;
+            tempCanvas.height = gridSize;
+            
+            const useCircularCrop = circularCropCheckbox.checked;
+            
+            if (useCircularCrop) {
+                tempCtx.save();
+                const radius = gridSize / 2;
+                tempCtx.beginPath();
+                tempCtx.arc(gridSize / 2, gridSize / 2, radius, 0, 2 * Math.PI);
+                tempCtx.clip();
+                drawImageToFit(tempCtx, img, gridSize, gridSize);
+                tempCtx.restore();
+            } else {
+                drawImageToFit(tempCtx, img, gridSize, gridSize);
+            }
+            
+            const imageData = tempCtx.getImageData(0, 0, gridSize, gridSize);
+            currentImageData = imageData;
+            
+            const pixelSize = 10;
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const index = (y * gridSize + x) * 4;
+                    const r = imageData.data[index];
+                    const g = imageData.data[index + 1];
+                    const b = imageData.data[index + 2];
+                    const a = imageData.data[index + 3];
+                    
+                    if (a > 0) {
+                        pixelatedCtx.fillStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + (a/255) + ')';
+                        pixelatedCtx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+            
+            drawGrid();
+        }
+
+        function drawImageToFit(ctx, img, width, height) {
+            let imgWidth = img.width || img.videoWidth || width;
+            let imgHeight = img.height || img.videoHeight || height;
+            
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = width / height;
+            
+            let drawWidth, drawHeight, drawX, drawY;
+            
+            if (imgAspect > canvasAspect) {
+                drawHeight = height;
+                drawWidth = height * imgAspect;
+                drawX = (width - drawWidth) / 2;
+                drawY = 0;
+            } else {
+                drawWidth = width;
+                drawHeight = width / imgAspect;
+                drawX = 0;
+                drawY = (height - drawHeight) / 2;
+            }
+            
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        }
+
+        function drawGrid() {
+            const gridSize = parseInt(gridSizeSlider.value);
+            const pixelSize = 10;
+            const canvasSize = gridSize * pixelSize;
+            pixelatedCtx.strokeStyle = '#333';
+            pixelatedCtx.lineWidth = 1;
+            
+            for (let x = 0; x <= gridSize; x++) {
+                pixelatedCtx.beginPath();
+                pixelatedCtx.moveTo(x * pixelSize, 0);
+                pixelatedCtx.lineTo(x * pixelSize, canvasSize);
+                pixelatedCtx.stroke();
+            }
+            
+            for (let y = 0; y <= gridSize; y++) {
+                pixelatedCtx.beginPath();
+                pixelatedCtx.moveTo(0, y * pixelSize);
+                pixelatedCtx.lineTo(canvasSize, y * pixelSize);
+                pixelatedCtx.stroke();
+            }
+        }
+
+        function updateUI() {
+            const useCircularCrop = circularCropCheckbox.checked;
+            
+            if (perspectiveMode) {
+                originalCanvas.classList.add('perspective-mode');
+                perspectiveBtn.textContent = 'Exit Perspective Mode';
+                resetBtn.style.display = 'inline-block';
+                circularCropCheckbox.disabled = true;
+                lensBtn.disabled = true;
+                
+                // Show mode indicator
+                modeIndicator.textContent = 'Perspective Mode';
+                modeIndicator.className = 'mode-indicator mode-perspective';
+                modeIndicator.style.display = 'inline-block';
+                
+                if (selectedPoints.length === 4) {
+                    correctBtn.style.display = 'inline-block';
+                    correctBtn.disabled = false;
+                    originalTitle.textContent = 'Original - Click "Apply Correction" to apply';
+                } else {
+                    correctBtn.style.display = 'none';
+                    correctBtn.disabled = true;
+                    originalTitle.textContent = 'Original - Click ' + selectedPoints.length + '/4 corners';
+                }
+            } else if (lensMode) {
+                lensBtn.textContent = 'Exit Lens Correction';
+                lensControls.style.display = 'block';
+                perspectiveBtn.disabled = true;
+                circularCropCheckbox.disabled = true;
+                
+                // Show mode indicator
+                modeIndicator.textContent = 'Lens Correction';
+                modeIndicator.className = 'mode-indicator mode-lens';
+                modeIndicator.style.display = 'inline-block';
+                
+                originalTitle.textContent = 'Lens Correction - Drag grid to outline the rectangle, then click Apply';
+            } else {
+                originalCanvas.classList.remove('perspective-mode');
+                perspectiveBtn.textContent = 'Enable Perspective Mode';
+                lensBtn.textContent = 'Enable Lens Correction';
+                correctBtn.style.display = 'none';
+                resetBtn.style.display = 'none';
+                lensControls.style.display = 'none';
+                circularCropCheckbox.disabled = false;
+                perspectiveBtn.disabled = false;
+                lensBtn.disabled = false;
+                
+                // Hide mode indicator
+                modeIndicator.style.display = 'none';
+                
+                if (originalImageData || lensImageData) {
+                    originalTitle.textContent = useCircularCrop ? "Corrected (Cropped to Circle)" : "Corrected";
+                } else {
+                    originalTitle.textContent = useCircularCrop ? "Original (Cropped to Circle)" : "Original";
+                }
+            }
+        }
+
+        function toggleLensCorrection() {
+            lensMode = !lensMode;
+            selectedPoints = [];
+            clearPerspectivePoints();
+            
+            if (lensMode) {
+                initializeGrid();
+            }
+            
+            updateUI();
+            processImage();
+        }
+
+        function initializeGrid() {
+            gridPoints = [];
+            const cols = 5;
+            const rows = 5;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = (originalCanvas.width / (cols - 1)) * col;
+                    const y = (originalCanvas.height / (rows - 1)) * row;
+                    
+                    gridPoints.push({
+                        x: x,
+                        y: y,
+                        originalX: x, // Store original position for reset
+                        originalY: y,
+                        row: row,
+                        col: col
+                    });
+                }
+            }
+        }
+
+        function drawDistortionGrid() {
+            originalCtx.save();
+            
+            // Draw filled semi-transparent area to show what will be kept
+            originalCtx.fillStyle = 'rgba(100, 255, 100, 0.1)';
+            originalCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            originalCtx.lineWidth = 2;
+            
+            const cols = 5;
+            const rows = 5;
+            
+            // Draw the boundary of the grid area (what will be kept)
+            originalCtx.beginPath();
+            // Top edge
+            for (let col = 0; col < cols; col++) {
+                const point = gridPoints[0 * cols + col];
+                if (col === 0) {
+                    originalCtx.moveTo(point.x, point.y);
+                } else {
+                    originalCtx.lineTo(point.x, point.y);
+                }
+            }
+            // Right edge
+            for (let row = 1; row < rows; row++) {
+                const point = gridPoints[row * cols + (cols - 1)];
+                originalCtx.lineTo(point.x, point.y);
+            }
+            // Bottom edge
+            for (let col = cols - 2; col >= 0; col--) {
+                const point = gridPoints[(rows - 1) * cols + col];
+                originalCtx.lineTo(point.x, point.y);
+            }
+            // Left edge
+            for (let row = rows - 2; row > 0; row--) {
+                const point = gridPoints[row * cols + 0];
+                originalCtx.lineTo(point.x, point.y);
+            }
+            originalCtx.closePath();
+            originalCtx.fill();
+            originalCtx.stroke();
+            
+            // Draw internal grid lines (lighter)
+            originalCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            originalCtx.lineWidth = 1;
+            
+            // Horizontal lines
+            for (let row = 1; row < rows - 1; row++) {
+                originalCtx.beginPath();
+                for (let col = 0; col < cols; col++) {
+                    const point = gridPoints[row * cols + col];
+                    if (col === 0) {
+                        originalCtx.moveTo(point.x, point.y);
+                    } else {
+                        originalCtx.lineTo(point.x, point.y);
+                    }
+                }
+                originalCtx.stroke();
+            }
+            
+            // Vertical lines
+            for (let col = 1; col < cols - 1; col++) {
+                originalCtx.beginPath();
+                for (let row = 0; row < rows; row++) {
+                    const point = gridPoints[row * cols + col];
+                    if (row === 0) {
+                        originalCtx.moveTo(point.x, point.y);
+                    } else {
+                        originalCtx.lineTo(point.x, point.y);
+                    }
+                }
+                originalCtx.stroke();
+            }
+            
+            // Draw corner points (larger and more visible)
+            originalCtx.fillStyle = 'rgba(255, 50, 50, 0.9)';
+            originalCtx.strokeStyle = 'white';
+            originalCtx.lineWidth = 2;
+            
+            // Highlight corner points
+            const corners = [
+                gridPoints[0], // top-left
+                gridPoints[cols - 1], // top-right
+                gridPoints[(rows - 1) * cols], // bottom-left
+                gridPoints[(rows - 1) * cols + (cols - 1)] // bottom-right
+            ];
+            
+            corners.forEach(point => {
+                originalCtx.beginPath();
+                originalCtx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                originalCtx.fill();
+                originalCtx.stroke();
+            });
+            
+            // Draw other grid points (smaller)
+            originalCtx.fillStyle = 'rgba(255, 100, 100, 0.8)';
+            gridPoints.forEach((point, index) => {
+                if (!corners.includes(point)) {
+                    originalCtx.beginPath();
+                    originalCtx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                    originalCtx.fill();
+                    originalCtx.stroke();
+                }
+            });
+            
+            originalCtx.restore();
+        }
+
+        function findNearestGridPoint(x, y) {
+            let nearestPoint = null;
+            let minDistance = Infinity;
+            
+            gridPoints.forEach(point => {
+                const distance = getDistance(x, y, point.x, point.y);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestPoint = point;
+                }
+            });
+            
+            return nearestPoint;
+        }
+
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+        }
+
+        function applyGridCorrection() {
+            applyGridDistortionCorrection();
+        }
+        function applyGridDistortionCorrection() {
+            if (!currentImage || gridPoints.length === 0) return;
+            
+            // Create corrected and cropped image using grid transformation
+            const srcCanvas = document.createElement('canvas');
+            const srcCtx = srcCanvas.getContext('2d');
+            srcCanvas.width = currentImage.width;
+            srcCanvas.height = currentImage.height;
+            srcCtx.drawImage(currentImage, 0, 0);
+            
+            const srcData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+            
+            // Calculate output size (standard rectangle)
+            const outputWidth = 800; // Fixed output width
+            const outputHeight = 600; // Fixed output height
+            
+            const destCanvas = document.createElement('canvas');
+            const destCtx = destCanvas.getContext('2d');
+            destCanvas.width = outputWidth;
+            destCanvas.height = outputHeight;
+            const destData = destCtx.createImageData(outputWidth, outputHeight);
+            
+            // Scale grid to image size
+            const scaleX = srcCanvas.width / originalCanvas.width;
+            const scaleY = srcCanvas.height / originalCanvas.height;
+            
+            for (let y = 0; y < outputHeight; y++) {
+                for (let x = 0; x < outputWidth; x++) {
+                    // Convert output coordinates to normalized grid coordinates (0-1)
+                    const gridU = x / (outputWidth - 1);
+                    const gridV = y / (outputHeight - 1);
+                    
+                    // Find source coordinates in the distorted grid
+                    const sourceCoords = getSourceFromGrid(gridU, gridV);
+                    
+                    if (sourceCoords) {
+                        const srcX = Math.floor(sourceCoords.x * scaleX);
+                        const srcY = Math.floor(sourceCoords.y * scaleY);
+                        
+                        if (srcX >= 0 && srcX < srcCanvas.width && srcY >= 0 && srcY < srcCanvas.height) {
+                            const srcIndex = (srcY * srcCanvas.width + srcX) * 4;
+                            const destIndex = (y * outputWidth + x) * 4;
+                            
+                            destData.data[destIndex] = srcData.data[srcIndex];
+                            destData.data[destIndex + 1] = srcData.data[srcIndex + 1];
+                            destData.data[destIndex + 2] = srcData.data[srcIndex + 2];
+                            destData.data[destIndex + 3] = srcData.data[srcIndex + 3];
+                        }
+                    }
+                }
+            }
+            
+            destCtx.putImageData(destData, 0, 0);
+            lensImageData = destCtx.getImageData(0, 0, outputWidth, outputHeight);
+            
+            // Exit lens mode and apply the correction
+            lensMode = false;
+            updateUI();
+            processImage();
+        }
+
+        function getSourceFromGrid(u, v) {
+            // u, v are normalized coordinates (0-1) in the output rectangle
+            // We need to find the corresponding point in the user-adjusted grid
+            
+            const cols = 5;
+            const rows = 5;
+            
+            // Find which grid cell this corresponds to
+            const cellU = u * (cols - 1);
+            const cellV = v * (rows - 1);
+            
+            const col = Math.floor(cellU);
+            const row = Math.floor(cellV);
+            
+            // Clamp to valid range
+            const clampedCol = Math.max(0, Math.min(cols - 2, col));
+            const clampedRow = Math.max(0, Math.min(rows - 2, row));
+            
+            // Get the four corner points of this grid cell
+            const topLeft = gridPoints[clampedRow * cols + clampedCol];
+            const topRight = gridPoints[clampedRow * cols + (clampedCol + 1)];
+            const bottomLeft = gridPoints[(clampedRow + 1) * cols + clampedCol];
+            const bottomRight = gridPoints[(clampedRow + 1) * cols + (clampedCol + 1)];
+            
+            // Calculate position within the cell (0-1)
+            const localU = cellU - clampedCol;
+            const localV = cellV - clampedRow;
+            
+            // Bilinear interpolation to find the corresponding point in the distorted grid
+            const top = {
+                x: topLeft.x + localU * (topRight.x - topLeft.x),
+                y: topLeft.y + localU * (topRight.y - topLeft.y)
+            };
+            
+            const bottom = {
+                x: bottomLeft.x + localU * (bottomRight.x - bottomLeft.x),
+                y: bottomLeft.y + localU * (bottomRight.y - bottomLeft.y)
+            };
+            
+            const sourceX = top.x + localV * (bottom.x - top.x);
+            const sourceY = top.y + localV * (bottom.y - top.y);
+            
+            return { x: sourceX, y: sourceY };
+        }
+
+        function getSourceCoordinates(x, y) {
+            // Find which grid square this point is in
+            const cols = 5;
+            const rows = 5;
+            
+            // Find grid cell
+            const cellWidth = originalCanvas.width / (cols - 1);
+            const cellHeight = originalCanvas.height / (rows - 1);
+            
+            const col = Math.floor(x / cellWidth);
+            const row = Math.floor(y / cellHeight);
+            
+            if (col < 0 || col >= cols - 1 || row < 0 || row >= rows - 1) {
+                return { x: x, y: y }; // Outside grid, no transformation
+            }
+            
+            // Get the four corner points of this grid cell
+            const topLeft = gridPoints[row * cols + col];
+            const topRight = gridPoints[row * cols + (col + 1)];
+            const bottomLeft = gridPoints[(row + 1) * cols + col];
+            const bottomRight = gridPoints[(row + 1) * cols + (col + 1)];
+            
+            // Calculate position within the cell (0-1)
+            const cellX = (x - col * cellWidth) / cellWidth;
+            const cellY = (y - row * cellHeight) / cellHeight;
+            
+            // Bilinear interpolation to find the corresponding point in the distorted grid
+            const top = {
+                x: topLeft.x + cellX * (topRight.x - topLeft.x),
+                y: topLeft.y + cellX * (topRight.y - topLeft.y)
+            };
+            
+            const bottom = {
+                x: bottomLeft.x + cellX * (bottomRight.x - bottomLeft.x),
+                y: bottomLeft.y + cellX * (bottomRight.y - bottomLeft.y)
+            };
+            
+            const sourceX = top.x + cellY * (bottom.x - top.x);
+            const sourceY = top.y + cellY * (bottom.y - top.y);
+            
+            return { x: sourceX, y: sourceY };
+        }
+
+        function resetLensCorrection() {
+            // Reset all grid points to their original positions
+            gridPoints.forEach(point => {
+                point.x = point.originalX;
+                point.y = point.originalY;
+            });
+            
+            lensImageData = null;
+            processImage();
+        }
+
+        function togglePerspectiveMode() {
+            perspectiveMode = !perspectiveMode;
+            selectedPoints = [];
+            clearPerspectivePoints();
+            updateUI();
+            processImage();
+        }
+
+        function addPerspectivePoint(x, y, number) {
+            const point = document.createElement('div');
+            point.className = 'perspective-point';
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            point.title = 'Point ' + number;
+            perspectivePoints.appendChild(point);
+        }
+
+        function clearPerspectivePoints() {
+            perspectivePoints.innerHTML = '';
+        }
+
+        function correctPerspective() {
+            if (selectedPoints.length !== 4) {
+                alert('Please select exactly 4 corners');
+                return;
+            }
+
+            if (!currentImage) {
+                alert('No image loaded');
+                return;
+            }
+
+            const correctedImageData = applyPerspectiveCorrection();
+            
+            if (correctedImageData) {
+                originalImageData = correctedImageData;
+                perspectiveMode = false;
+                selectedPoints = [];
+                clearPerspectivePoints();
+                updateUI();
+                processImage();
+            } else {
+                alert('Perspective correction failed. Please try selecting the corners again.');
+            }
+        }
+
+        function resetPerspective() {
+            originalImageData = null;
+            perspectiveMode = false;
+            selectedPoints = [];
+            clearPerspectivePoints();
+            updateUI();
+            processImage();
+        }
+
+        function applyPerspectiveCorrection() {
+            if (!currentImage || selectedPoints.length !== 4) {
+                return null;
+            }
+
+            const srcCanvas = document.createElement('canvas');
+            const srcCtx = srcCanvas.getContext('2d');
+            srcCanvas.width = currentImage.width;
+            srcCanvas.height = currentImage.height;
+            srcCtx.drawImage(currentImage, 0, 0);
+
+            const scaleX = currentImage.width / originalCanvas.width;
+            const scaleY = currentImage.height / originalCanvas.height;
+            
+            const imagePoints = selectedPoints.map(point => ({
+                x: point.x * scaleX,
+                y: point.y * scaleY
+            }));
+
+            let minX = Math.min(...imagePoints.map(p => p.x));
+            let maxX = Math.max(...imagePoints.map(p => p.x));
+            let minY = Math.min(...imagePoints.map(p => p.y));
+            let maxY = Math.max(...imagePoints.map(p => p.y));
+
+            const paddingX = (maxX - minX) * 0.1;
+            const paddingY = (maxY - minY) * 0.1;
+            minX = Math.max(0, minX - paddingX);
+            maxX = Math.min(currentImage.width, maxX + paddingX);
+            minY = Math.max(0, minY - paddingY);
+            maxY = Math.min(currentImage.height, maxY + paddingY);
+
+            const width = Math.floor(maxX - minX);
+            const height = Math.floor(maxY - minY);
+
+            if (width <= 10 || height <= 10) {
+                return null;
+            }
+
+            const destCanvas = document.createElement('canvas');
+            const destCtx = destCanvas.getContext('2d');
+            
+            const maxOutputSize = 800;
+            const outputAspect = width / height;
+            let outputWidth, outputHeight;
+            
+            if (outputAspect > 1) {
+                outputWidth = Math.min(maxOutputSize, width);
+                outputHeight = outputWidth / outputAspect;
+            } else {
+                outputHeight = Math.min(maxOutputSize, height);
+                outputWidth = outputHeight * outputAspect;
+            }
+            
+            destCanvas.width = Math.floor(outputWidth);
+            destCanvas.height = Math.floor(outputHeight);
+
+            const cropCanvas = document.createElement('canvas');
+            const cropCtx = cropCanvas.getContext('2d');
+            cropCanvas.width = width;
+            cropCanvas.height = height;
+            
+            cropCtx.drawImage(
+                srcCanvas,
+                minX, minY, width, height,
+                0, 0, width, height
+            );
+            
+            destCtx.drawImage(cropCanvas, 0, 0, destCanvas.width, destCanvas.height);
+
+            return destCtx.getImageData(0, 0, destCanvas.width, destCanvas.height);
+        }
+
+        function downloadPattern() {
+            if (!currentImageData) {
+                alert('Please upload an image first!');
+                return;
+            }
+            
+            const gridSize = parseInt(gridSizeSlider.value);
+            const link = document.createElement('a');
+            link.download = `beading-pattern-${gridSize}x${gridSize}.png`;
+            link.href = pixelatedCanvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

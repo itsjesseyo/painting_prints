@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Enhance iPhone Pro painting photographs for print-on-demand services">
+    <title>Painting Enhancement Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+    <!-- Step Progress Indicator -->
+    <header id="step-indicator">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="step-text" id="step-text">Step 1 of 6: Upload Image</p>
+    </header>
+
+    <!-- Main Canvas Area -->
+    <main id="main-content">
+        <!-- Step 1: Upload Interface -->
+        <div id="step-1" class="step-container active">
+            <canvas id="image-canvas"></canvas>
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">
+                    <div class="upload-title">Tap to Upload</div>
+                    <div class="upload-subtitle">or drag and drop</div>
+                </div>
+            </div>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+        </div>
+
+        <!-- Step 2: Grid Correction -->
+        <div id="step-2" class="step-container">
+            <div class="image-preview">
+                <canvas class="step-canvas" id="canvas-step-2"></canvas>
+                <button class="before-after-toggle" id="before-after-2">Before/After</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Glare Removal -->
+        <div id="step-3" class="step-container">
+            <div class="image-preview">
+                <canvas class="step-canvas" id="canvas-step-3"></canvas>
+                <button class="before-after-toggle" id="before-after-3">Before/After</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Color Correction -->
+        <div id="step-4" class="step-container">
+            <div class="image-preview">
+                <canvas class="step-canvas" id="canvas-step-4"></canvas>
+                <button class="before-after-toggle" id="before-after-4">Before/After</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Super Resolution -->
+        <div id="step-5" class="step-container">
+            <div class="image-preview">
+                <canvas class="step-canvas" id="canvas-step-5"></canvas>
+            </div>
+        </div>
+
+        <!-- Step 6: Download -->
+        <div id="step-6" class="step-container">
+            <div class="image-preview">
+                <canvas class="step-canvas" id="canvas-step-6"></canvas>
+                <div class="enhancement-badge">✅ Enhanced</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Controls Panel -->
+    <section id="controls-panel">
+        <!-- Step 1: Upload Controls -->
+        <div id="controls-1" class="controls-container active">
+            <p class="control-description">Select a photo of your painting taken with iPhone Pro</p>
+        </div>
+
+        <!-- Step 2: Grid Correction Controls -->
+        <div id="controls-2" class="controls-container">
+            <p class="control-description">Drag grid points to correct distortion</p>
+            <div class="control-group">
+                <button class="btn btn-secondary" id="optimize-grid">✨ Optimize Spacing</button>
+                <button class="btn btn-secondary" id="reset-grid">Reset Grid</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Glare Removal Controls -->
+        <div id="controls-3" class="controls-container">
+            <div class="control-group">
+                <label class="control-label">Brightness: <span id="brightness-value">0</span></label>
+                <input type="range" class="slider" id="brightness-slider" min="-100" max="100" value="0">
+            </div>
+            <div class="control-group">
+                <label class="control-label">Contrast: <span id="contrast-value">1.0</span></label>
+                <input type="range" class="slider" id="contrast-slider" min="0.5" max="2.0" value="1.0" step="0.1">
+            </div>
+            <button class="btn btn-secondary reset-btn" id="reset-glare">Reset</button>
+        </div>
+
+        <!-- Step 4: Color Correction Controls -->
+        <div id="controls-4" class="controls-container">
+            <div class="control-group">
+                <label class="control-label">
+                    <input type="checkbox" id="auto-color" checked> Auto Color Balance
+                </label>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Intensity: <span id="color-intensity-value">75</span>%</label>
+                <input type="range" class="slider" id="color-intensity-slider" min="0" max="100" value="75">
+            </div>
+        </div>
+
+        <!-- Step 5: Super Resolution Controls -->
+        <div id="controls-5" class="controls-container">
+            <div class="control-group">
+                <label class="control-label">Print Size</label>
+                <select class="size-selector" id="print-size">
+                    <option value="8x10">8×10 inches (2400×3000px)</option>
+                    <option value="11x14">11×14 inches (3300×4200px)</option>
+                    <option value="16x20">16×20 inches (4800×6000px)</option>
+                    <option value="18x24">18×24 inches (5400×7200px)</option>
+                    <option value="24x30" selected>24×30 inches (7200×9000px)</option>
+                    <option value="30x40">30×40 inches (9000×12000px)</option>
+                </select>
+            </div>
+            <div class="file-info" id="file-info">
+                📊 Estimated size: ~45MB JPEG
+            </div>
+            <div class="warning-box" id="size-warning">
+                ⚠️ Large file - ensure stable connection
+            </div>
+            <button class="btn btn-primary generate-btn" id="generate-btn">🚀 Generate High-Resolution</button>
+        </div>
+
+        <!-- Step 6: Download Controls -->
+        <div id="controls-6" class="controls-container">
+            <div class="control-group">
+                <label class="control-label">Output Format</label>
+                <select class="format-selector" id="output-format">
+                    <option value="jpeg-95" selected>JPEG High Quality (45MB)</option>
+                    <option value="jpeg-85">JPEG Standard Quality (25MB)</option>
+                    <option value="png">PNG Lossless (180MB)</option>
+                </select>
+            </div>
+            <div class="file-info">
+                📁 Final: 7200×9000px @ 300 DPI<br>
+                🎨 Ready for 24×30 inch print
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation -->
+    <footer id="navigation">
+        <button class="btn btn-secondary" id="back-btn" style="display: none;">Back</button>
+        <button class="btn btn-secondary" id="skip-btn">Skip</button>
+        <button class="btn btn-primary" id="apply-btn" style="display: none;">Apply</button>
+        <button class="btn btn-primary" id="next-btn" disabled>Next</button>
+    </footer>
+
+    <!-- Startup Loading Overlay -->
+    <div id="startup-loading" class="startup-overlay">
+        <div class="startup-content">
+            <h1>🎨 Painting Enhancer</h1>
+            <div class="spinner"></div>
+            <p id="startup-message">Initializing libraries...</p>
+            <div class="startup-progress">
+                <div class="startup-progress-fill" id="startup-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <p id="loading-message">Processing...</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="loading-progress"></div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="error-toast" class="hidden">
+        <p id="error-message"></p>
+        <button id="error-close">×</button>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="success-toast" class="hidden">
+        <p id="success-message"></p>
+        <button id="success-close">×</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="opencv.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/image-processor.js"></script>
+    <script src="js/upscaler.js"></script>
+    <script src="js/ui-controller.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Startup loading management
+        let startupProgress = 0;
+        let startupComplete = false;
+        
+        function updateStartupProgress(percentage, message) {
+            const progressFill = document.getElementById('startup-progress');
+            const messageElement = document.getElementById('startup-message');
+            
+            if (progressFill) {
+                progressFill.style.width = percentage + '%';
+            }
+            if (messageElement && message) {
+                messageElement.textContent = message;
+            }
+            
+            startupProgress = percentage;
+            console.log(`Startup: ${percentage}% - ${message}`);
+        }
+        
+        function hideStartupLoading() {
+            if (startupComplete) return;
+            startupComplete = true;
+            
+            const startupOverlay = document.getElementById('startup-loading');
+            if (startupOverlay) {
+                startupOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    startupOverlay.style.display = 'none';
+                }, 500);
+            }
+            console.log('Startup loading hidden');
+        }
+        
+        // Initialize startup sequence
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting initialization...');
+            updateStartupProgress(20, 'Loading libraries...');
+        });
+        
+        // Track library loading
+        window.addEventListener('load', function() {
+            updateStartupProgress(50, 'Libraries loaded...');
+            
+            // Check for required libraries
+            setTimeout(() => {
+                if (typeof cv !== 'undefined') {
+                    updateStartupProgress(70, 'OpenCV.js ready...');
+                } else {
+                    updateStartupProgress(70, 'OpenCV.js not available...');
+                }
+                
+                if (typeof Upscaler !== 'undefined') {
+                    updateStartupProgress(80, 'UpscalerJS ready...');
+                } else {
+                    updateStartupProgress(80, 'UpscalerJS not available...');
+                }
+                
+                // Initialize app
+                updateStartupProgress(90, 'Initializing app...');
+                initializeApp();
+            }, 500);
+        });
+        
+        function initializeApp() {
+            try {
+                const app = new PaintingEnhancer();
+                app.init().then(() => {
+                    updateStartupProgress(100, 'Ready!');
+                    setTimeout(hideStartupLoading, 800);
+                }).catch(error => {
+                    console.error('App initialization failed:', error);
+                    updateStartupProgress(100, 'Ready (limited functionality)');
+                    setTimeout(hideStartupLoading, 800);
+                });
+            } catch (error) {
+                console.error('Failed to create app:', error);
+                updateStartupProgress(100, 'Ready (limited functionality)');
+                setTimeout(hideStartupLoading, 800);
+            }
+        }
+        
+        // Initialize app when OpenCV is ready (if it loads after DOM)
+        window.onOpenCvReady = function() {
+            console.log('OpenCV loaded asynchronously');
+            if (!window.app) {
+                updateStartupProgress(70, 'OpenCV.js ready...');
+                setTimeout(() => {
+                    updateStartupProgress(90, 'Initializing app...');
+                    initializeApp();
+                }, 300);
+            }
+        };
+        
+        // Fallback timeout
+        setTimeout(() => {
+            if (!startupComplete) {
+                console.warn('Initialization timeout, proceeding anyway');
+                updateStartupProgress(100, 'Ready!');
+                hideStartupLoading();
+            }
+        }, 10000); // 10 second timeout
+    </script>
+</body>
+</html>

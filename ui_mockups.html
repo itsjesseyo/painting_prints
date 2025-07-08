@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painting Enhancement Tool - UI Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        .mockup-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .mockup-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .phone-mockup {
+            width: 320px;
+            height: 640px;
+            background: #000;
+            border-radius: 25px;
+            padding: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            height: 24px;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .step-header {
+            background: #fff;
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #007AFF;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .step-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f8f8;
+        }
+
+        .image-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .image-placeholder {
+            width: 200px;
+            height: 150px;
+            background: #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+            border: 2px dashed #bbb;
+        }
+
+        .painting-image {
+            width: 200px;
+            height: 150px;
+            background: linear-gradient(45deg, #8B4513, #D2691E, #F4A460);
+            border-radius: 8px;
+            position: relative;
+            border: 2px solid #333;
+        }
+
+        .painting-frame {
+            position: absolute;
+            inset: -4px;
+            background: #8B4513;
+            border-radius: 12px;
+            z-index: -1;
+        }
+
+        .corner-handles {
+            position: absolute;
+            inset: 0;
+        }
+
+        .corner-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #007AFF;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+        }
+
+        .corner-handle.top-left { top: 0; left: 0; }
+        .corner-handle.top-right { top: 0; right: 0; transform: translate(50%, -50%); }
+        .corner-handle.bottom-right { bottom: 0; right: 0; transform: translate(50%, 50%); }
+        .corner-handle.bottom-left { bottom: 0; left: 0; transform: translate(-50%, 50%); }
+
+        .controls-panel {
+            background: #fff;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            min-height: 140px;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            appearance: none;
+            position: relative;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #007AFF;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .size-selector {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .file-info {
+            background: #f0f8ff;
+            border: 1px solid #007AFF;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            color: #0056CC;
+        }
+
+        .navigation {
+            background: #fff;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056CC;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upload-area {
+            width: 240px;
+            height: 180px;
+            border: 2px dashed #007AFF;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .upload-area:hover {
+            background: rgba(0, 122, 255, 0.1);
+            border-color: #0056CC;
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            background: #007AFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .before-after-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .mockup-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .step-description {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .step-description h3 {
+            color: #007AFF;
+            margin-bottom: 10px;
+        }
+
+        .step-description ul {
+            margin-left: 20px;
+        }
+
+        .step-description li {
+            margin-bottom: 5px;
+        }
+
+        .auto-detect-btn {
+            background: #34C759;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            color: #856404;
+            margin-top: 8px;
+        }
+
+        .generate-btn {
+            background: #FF9500;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="mockup-container">
+        <div class="mockup-header">
+            <h1>Painting Enhancement Tool - UI/UX Mockups</h1>
+            <p>Mobile-first design for iPhone Pro painting photography enhancement</p>
+        </div>
+
+        <!-- Step Descriptions -->
+        <div class="step-description">
+            <h3>7-Step Enhancement Workflow</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Upload iPhone Pro painting photograph</li>
+                <li><strong>Step 2:</strong> Optional lens correction for barrel distortion</li>
+                <li><strong>Step 3:</strong> Perspective correction (auto-detect + manual override)</li>
+                <li><strong>Step 4:</strong> Glare removal with brightness/contrast adjustment</li>
+                <li><strong>Step 5:</strong> Auto color correction and enhancement</li>
+                <li><strong>Step 6:</strong> Super-resolution upscaling to print quality</li>
+                <li><strong>Step 7:</strong> Download in JPEG or PNG format</li>
+            </ul>
+        </div>
+
+        <!-- Step 1: Upload -->
+        <div class="mockup-grid">
+            <div>
+                <div class="mockup-title">Step 1: Image Upload</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 14%"></div>
+                            </div>
+                            <div class="step-text">Step 1 of 7: Upload Image</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="upload-area">
+                                    <div class="upload-icon">📷</div>
+                                    <div style="text-align: center;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">Tap to Upload</div>
+                                        <div style="font-size: 12px; color: #666;">or drag and drop</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <p style="text-align: center; color: #666; font-size: 14px;">
+                                Select a photo of your painting taken with iPhone Pro
+                            </p>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary" disabled>Skip</button>
+                            <button class="btn btn-primary" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Lens Correction -->
+            <div>
+                <div class="mockup-title">Step 2: Lens Correction</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 28%"></div>
+                            </div>
+                            <div class="step-text">Step 2 of 7: Lens Correction</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                </div>
+                                <button class="before-after-toggle">Before/After</button>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <div class="control-group">
+                                <label class="control-label">Barrel Distortion: +15</label>
+                                <input type="range" class="slider" min="-100" max="100" value="15">
+                            </div>
+                            <button class="btn btn-secondary" style="width: 100%; margin-top: 8px;">Reset</button>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Skip</button>
+                            <button class="btn btn-primary">Apply</button>
+                            <button class="btn btn-primary">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Perspective Correction -->
+        <div class="mockup-grid">
+            <div>
+                <div class="mockup-title">Step 3: Perspective Correction</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 42%"></div>
+                            </div>
+                            <div class="step-text">Step 3 of 7: Perspective</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                    <div class="corner-handles">
+                                        <div class="corner-handle top-left"></div>
+                                        <div class="corner-handle top-right"></div>
+                                        <div class="corner-handle bottom-right"></div>
+                                        <div class="corner-handle bottom-left"></div>
+                                    </div>
+                                    <div class="grid-overlay"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <button class="auto-detect-btn">🎯 Auto-Detect Corners</button>
+                            <p style="font-size: 14px; color: #666;">
+                                Drag corner handles to adjust perspective
+                            </p>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Skip</button>
+                            <button class="btn btn-primary">Apply</button>
+                            <button class="btn btn-primary">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Glare Removal -->
+            <div>
+                <div class="mockup-title">Step 4: Glare Removal</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 57%"></div>
+                            </div>
+                            <div class="step-text">Step 4 of 7: Glare Removal</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                </div>
+                                <button class="before-after-toggle">Before/After</button>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <div class="control-group">
+                                <label class="control-label">Brightness: -20</label>
+                                <input type="range" class="slider" min="-100" max="100" value="-20">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">Contrast: 1.2</label>
+                                <input type="range" class="slider" min="0.5" max="2" value="1.2" step="0.1">
+                            </div>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Skip</button>
+                            <button class="btn btn-primary">Apply</button>
+                            <button class="btn btn-primary">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Color Correction & Step 6: Super Resolution -->
+        <div class="mockup-grid">
+            <div>
+                <div class="mockup-title">Step 5: Auto Color Correction</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 71%"></div>
+                            </div>
+                            <div class="step-text">Step 5 of 7: Color Correction</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                </div>
+                                <button class="before-after-toggle">Before/After</button>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <input type="checkbox" checked> Auto Color Balance
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">Intensity: 75%</label>
+                                <input type="range" class="slider" min="0" max="100" value="75">
+                            </div>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Skip</button>
+                            <button class="btn btn-primary">Apply</button>
+                            <button class="btn btn-primary">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="mockup-title">Step 6: Super Resolution</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%"></div>
+                            </div>
+                            <div class="step-text">Step 6 of 7: Super Resolution</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <div class="control-group">
+                                <label class="control-label">Print Size</label>
+                                <select class="size-selector">
+                                    <option>16×20 inches (4800×6000px)</option>
+                                    <option>18×24 inches (5400×7200px)</option>
+                                    <option selected>24×30 inches (7200×9000px)</option>
+                                    <option>30×40 inches (9000×12000px)</option>
+                                </select>
+                            </div>
+                            <div class="file-info">
+                                📊 Estimated size: ~45MB JPEG
+                            </div>
+                            <div class="warning-box">
+                                ⚠️ Large file - ensure stable connection
+                            </div>
+                            <button class="generate-btn">🚀 Generate High-Resolution</button>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Back</button>
+                            <button class="btn btn-primary" disabled>Processing...</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Download -->
+        <div class="mockup-grid">
+            <div>
+                <div class="mockup-title">Step 7: Download</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                            <div class="step-text">Step 7 of 7: Download</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area">
+                                <div class="painting-image">
+                                    <div class="painting-frame"></div>
+                                </div>
+                                <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                    ✅ Enhanced
+                                </div>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <div class="control-group">
+                                <label class="control-label">Output Format</label>
+                                <select class="size-selector">
+                                    <option selected>JPEG High Quality (45MB)</option>
+                                    <option>JPEG Standard Quality (25MB)</option>
+                                    <option>PNG Lossless (180MB)</option>
+                                </select>
+                            </div>
+                            <div class="file-info">
+                                📁 Final: 7200×9000px @ 300 DPI<br>
+                                🎨 Ready for 24×30 inch print
+                            </div>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Start Over</button>
+                            <button class="btn btn-primary">📥 Download</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div>
+                <div class="mockup-title">Success State</div>
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>🔋 100%</span>
+                        </div>
+                        <div class="step-header">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                            <div class="step-text">✅ Enhancement Complete!</div>
+                        </div>
+                        <div class="main-content">
+                            <div class="image-area" style="text-align: center; padding: 40px 20px;">
+                                <div style="font-size: 64px; margin-bottom: 20px;">🎨</div>
+                                <h2 style="color: #34C759; margin-bottom: 12px;">Success!</h2>
+                                <p style="color: #666; margin-bottom: 20px;">
+                                    Your painting has been enhanced and is ready for printing.
+                                </p>
+                                <div class="file-info">
+                                    📱 painting_enhanced.jpg<br>
+                                    📏 7200×9000px (45MB)<br>
+                                    🖨️ Print-ready @ 300 DPI
+                                </div>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 12px;">
+                                📥 Download Enhanced Image
+                            </button>
+                            <button class="btn btn-secondary" style="width: 100%;">
+                                🔄 Enhance Another Painting
+                            </button>
+                        </div>
+                        <div class="navigation">
+                            <button class="btn btn-secondary">Share</button>
+                            <button class="btn btn-primary">🏠 Home</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Design Notes -->
+        <div class="step-description">
+            <h3>UI/UX Design Principles</h3>
+            <ul>
+                <li><strong>Mobile-First:</strong> Optimized for iPhone Pro in portrait orientation</li>
+                <li><strong>Touch-Friendly:</strong> 44px minimum touch targets, large sliders, drag handles</li>
+                <li><strong>Progressive Disclosure:</strong> One step at a time with clear progress indication</li>
+                <li><strong>Visual Feedback:</strong> Before/after toggles, real-time previews, progress bars</li>
+                <li><strong>Error Prevention:</strong> File size warnings, validation messages, confirmation buttons</li>
+                <li><strong>Performance Awareness:</strong> Processing indicators, memory warnings, cancellation options</li>
+                <li><strong>Accessibility:</strong> High contrast, readable fonts, clear labeling</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
