@@ -909,15 +909,41 @@ class PaintingEnhancer {
             // Corners are larger and red
             const isCorner = (point.row === 0 || point.row === 4) && (point.col === 0 || point.col === 4);
             const canvasCoords = this.imageToCanvasCoords(point.x, point.y, canvas);
+            const isDragging = this.isDragging && this.draggedPoint === point;
             
-            ctx.fillStyle = isCorner ? 'rgba(255, 50, 50, 0.9)' : 'rgba(255, 100, 100, 0.8)';
-            ctx.strokeStyle = 'white';
+            // Main handle - becomes ghost (semi-transparent) when dragging
+            const handleOpacity = isDragging ? 0.3 : 0.9;
+            ctx.fillStyle = isCorner ? `rgba(255, 50, 50, ${handleOpacity})` : `rgba(255, 100, 100, ${handleOpacity})`;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${handleOpacity})`;
             ctx.lineWidth = 2;
             
             ctx.beginPath();
             ctx.arc(canvasCoords.x, canvasCoords.y, isCorner ? 8 : 5, 0, 2 * Math.PI);
             ctx.fill();
             ctx.stroke();
+            
+            // Precise indicator - small dot at exact coordinate
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.lineWidth = 1;
+            
+            ctx.beginPath();
+            ctx.arc(canvasCoords.x, canvasCoords.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // When dragging, add crosshair for extra precision
+            if (isDragging) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                const crossSize = 6;
+                ctx.moveTo(canvasCoords.x - crossSize, canvasCoords.y);
+                ctx.lineTo(canvasCoords.x + crossSize, canvasCoords.y);
+                ctx.moveTo(canvasCoords.x, canvasCoords.y - crossSize);
+                ctx.lineTo(canvasCoords.x, canvasCoords.y + crossSize);
+                ctx.stroke();
+            }
         });
         
         ctx.restore();
@@ -939,7 +965,8 @@ class PaintingEnhancer {
                 p.row === nearestPointResult.row && p.col === nearestPointResult.col
             );
             this.isDragging = true;
-            canvas.style.cursor = 'grabbing';
+            canvas.classList.add('dragging'); // Add CSS class for cursor control
+            canvas.style.cursor = 'none'; // Hide cursor during drag for precision
             log('Started dragging grid point at', nearestPointResult.row, nearestPointResult.col);
         }
     }
@@ -978,6 +1005,7 @@ class PaintingEnhancer {
             this.isDragging = false;
             this.draggedPoint = null;
             const canvas = document.getElementById('canvas-step-2');
+            canvas.classList.remove('dragging'); // Remove CSS class
             canvas.style.cursor = 'crosshair';
             log('Grid drag ended');
         }

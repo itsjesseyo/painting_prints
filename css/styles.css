@@ -192,7 +192,7 @@ body {
 }
 
 .step-canvas.dragging {
-    cursor: grabbing;
+    cursor: none; /* Hide cursor during precise dragging */
 }
 
 /* Before/After Toggle */
