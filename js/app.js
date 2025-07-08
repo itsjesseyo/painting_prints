@@ -8,6 +8,7 @@ class PaintingEnhancer {
             processedCanvas: null,
             currentCanvas: null,
             previewMode: false,
+            step3PreviewMode: false, // Add preview mode state for Step 3
             settings: {
                 gridCorrection: null,
                 brightness: 0,
@@ -418,6 +419,23 @@ class PaintingEnhancer {
         log('5x5 grid initialized with', gridPoints.length, 'points');
     }
     
+    initializeStep3() {
+        log('Initializing Step 3: Glare Removal with preview mode');
+        
+        // Set preview mode to ON by default
+        this.state.step3PreviewMode = true;
+        
+        // Initialize the preview
+        this.updatePreview();
+        
+        // Set the before/after button state
+        const beforeAfterBtn = document.getElementById('before-after-3');
+        if (beforeAfterBtn) {
+            beforeAfterBtn.textContent = 'Show Original';
+            beforeAfterBtn.classList.add('active');
+        }
+    }
+    
     // Coordinate transformation helpers
     imageToCanvasCoords(imageX, imageY, canvas) {
         if (!this.state.currentCanvas) return { x: imageX, y: imageY };
@@ -631,12 +649,9 @@ class PaintingEnhancer {
         this.state.settings.brightness = value;
         log('Brightness updated:', value);
         
-        // Real-time preview for brightness (only if showing "after")
-        if (this.ui.currentStep === 3) {
-            const beforeAfterState = this.ui.beforeAfterState[3];
-            if (!beforeAfterState) { // false or undefined means showing "after"
-                this.debouncedPreviewUpdate();
-            }
+        // Real-time preview for brightness (only if preview mode is on)
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            this.debouncedPreviewUpdate();
         }
     }
 
@@ -644,18 +659,32 @@ class PaintingEnhancer {
         this.state.settings.contrast = value;
         log('Contrast updated:', value);
         
-        // Real-time preview for contrast (only if showing "after")
-        if (this.ui.currentStep === 3) {
-            const beforeAfterState = this.ui.beforeAfterState[3];
-            if (!beforeAfterState) { // false or undefined means showing "after"
-                this.debouncedPreviewUpdate();
-            }
+        // Real-time preview for contrast (only if preview mode is on)
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            this.debouncedPreviewUpdate();
         }
     }
 
     resetGlareSettings() {
         this.state.settings.brightness = 0;
         this.state.settings.contrast = 1.0;
+        
+        // Update UI sliders
+        const brightnessSlider = document.getElementById('brightness-slider');
+        const brightnessValue = document.getElementById('brightness-value');
+        const contrastSlider = document.getElementById('contrast-slider');
+        const contrastValue = document.getElementById('contrast-value');
+        
+        if (brightnessSlider) brightnessSlider.value = 0;
+        if (brightnessValue) brightnessValue.textContent = '0';
+        if (contrastSlider) contrastSlider.value = 1.0;
+        if (contrastValue) contrastValue.textContent = '1.0';
+        
+        // Update preview if in Step 3 and preview mode is on
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            this.debouncedPreviewUpdate();
+        }
+        
         log('Glare settings reset');
     }
 
@@ -717,10 +746,10 @@ class PaintingEnhancer {
         this.updateFileEstimate();
     }
 
-    // Preview Toggle for Step 2
+    // Preview Toggle for Steps 2 and 3
     toggleBeforeAfter(step, showAfter) {
         if (step === 2) {
-            // Toggle preview mode
+            // Toggle preview mode for grid correction
             this.state.previewMode = !this.state.previewMode;
             
             const beforeAfterBtn = document.getElementById('before-after-2');
@@ -740,6 +769,31 @@ class PaintingEnhancer {
                     beforeAfterBtn.classList.remove('active');
                 }
                 log('Showing grid for editing');
+            }
+        } else if (step === 3) {
+            // Toggle preview mode for brightness/contrast
+            if (!this.state.step3PreviewMode) this.state.step3PreviewMode = true; // Default to on
+            this.state.step3PreviewMode = !this.state.step3PreviewMode;
+            
+            const beforeAfterBtn = document.getElementById('before-after-3');
+            if (this.state.step3PreviewMode) {
+                // Show preview (with brightness/contrast applied)
+                this.updatePreview();
+                if (beforeAfterBtn) {
+                    beforeAfterBtn.textContent = 'Show Original';
+                    beforeAfterBtn.classList.add('active');
+                }
+                log('Showing brightness/contrast preview');
+            } else {
+                // Show processed image from previous step (without brightness/contrast)
+                if (this.state.currentCanvas) {
+                    this.displayImage(this.state.currentCanvas);
+                }
+                if (beforeAfterBtn) {
+                    beforeAfterBtn.textContent = 'Preview';
+                    beforeAfterBtn.classList.remove('active');
+                }
+                log('Showing original for comparison');
             }
         } else {
             // Original behavior for other steps
@@ -1164,10 +1218,10 @@ class PaintingEnhancer {
         }
     }
 
-    // Debounced preview update for real-time adjustments
+    // Debounced preview update for real-time adjustments - optimized for mobile
     debouncedPreviewUpdate = debounce(() => {
         this.updatePreview();
-    }, 500);
+    }, 300); // Faster response for better UX
 
     async updatePreview() {
         if (!this.state.originalCanvas) {
@@ -1175,13 +1229,16 @@ class PaintingEnhancer {
         }
         
         try {
-            // Start with original image for preview
-            let currentCanvas = this.cloneCanvas(this.state.originalCanvas);
+            // Start with the appropriate base image for preview
+            let currentCanvas;
             
-            // Apply current step processing based on step
-            // No live preview for grid correction (step 2) - user sees grid overlay instead
             if (this.ui.currentStep === 3) {
-                // Preview brightness/contrast
+                // For Step 3 (Glare Removal), start with processed image from Step 2 if available
+                currentCanvas = this.state.currentCanvas ? 
+                    this.cloneCanvas(this.state.currentCanvas) : 
+                    this.cloneCanvas(this.state.originalCanvas);
+                
+                // Apply brightness/contrast preview
                 if (this.state.settings.brightness !== 0 || this.state.settings.contrast !== 1.0) {
                     const inputMat = this.processor.canvasToMat(currentCanvas);
                     if (inputMat) {
@@ -1197,6 +1254,9 @@ class PaintingEnhancer {
                         cleanupMats(inputMat, adjustedMat);
                     }
                 }
+            } else {
+                // For other steps, start with original image
+                currentCanvas = this.cloneCanvas(this.state.originalCanvas);
             }
             
             // Update display
