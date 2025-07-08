@@ -772,7 +772,6 @@ class PaintingEnhancer {
             }
         } else if (step === 3) {
             // Toggle preview mode for brightness/contrast
-            if (!this.state.step3PreviewMode) this.state.step3PreviewMode = true; // Default to on
             this.state.step3PreviewMode = !this.state.step3PreviewMode;
             
             const beforeAfterBtn = document.getElementById('before-after-3');
