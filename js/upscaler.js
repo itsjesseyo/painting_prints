@@ -34,12 +34,23 @@ class SuperResolution {
         log('Initializing Super Resolution...');
         
         try {
+            // Check if TensorFlow.js is available
+            if (typeof tf === 'undefined') {
+                log('TensorFlow.js not available, super resolution will be simulated');
+                this.isReady = false;
+                return false;
+            }
+
             // Check if UpscalerJS is available
             if (typeof Upscaler === 'undefined') {
                 log('UpscalerJS not available, super resolution will be simulated');
                 this.isReady = false;
                 return false;
             }
+
+            // Log TensorFlow.js backend info
+            log('TensorFlow.js backend:', tf.getBackend());
+            log('TensorFlow.js version:', tf.version);
 
             // Initialize with a default model (4x) for now
             // We'll change models dynamically based on requirements
@@ -408,7 +419,8 @@ class SuperResolution {
             webGL: this.checkWebGL(),
             memoryEstimate: this.estimateMemory(),
             upscalerAvailable: typeof Upscaler !== 'undefined',
-            tensorFlowAvailable: typeof tf !== 'undefined'
+            tensorFlowAvailable: typeof tf !== 'undefined',
+            tfVersion: typeof tf !== 'undefined' ? tf.version : null
         };
         
         log('Super Resolution capabilities:', capabilities);
