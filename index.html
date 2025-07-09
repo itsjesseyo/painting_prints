@@ -142,17 +142,16 @@
 
         <!-- Step 5: Download Controls -->
         <div id="controls-5" class="controls-container">
-            <div class="control-group">
-                <label class="control-label">Output Format</label>
-                <select class="format-selector" id="output-format">
-                    <option value="jpeg-95" selected>JPEG High Quality (45MB)</option>
-                    <option value="jpeg-85">JPEG Standard Quality (25MB)</option>
-                    <option value="png">PNG Lossless (180MB)</option>
+            <div class="control-group inline-control">
+                <label class="control-label inline-label">Output Format</label>
+                <select class="format-selector inline-select" id="output-format">
+                    <option value="jpeg-95" selected>JPEG High Quality</option>
+                    <option value="jpeg-85">JPEG Standard Quality</option>
+                    <option value="png">PNG Lossless</option>
                 </select>
             </div>
-            <div class="file-info">
-                📁 Final: 7200×9000px @ 300 DPI<br>
-                🎨 Ready for 24×30 inch print
+            <div class="file-info" id="download-info">
+                📁 Download size based on current image dimensions
             </div>
         </div>
 

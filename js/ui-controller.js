@@ -63,6 +63,7 @@ class UIController {
             generateBtn: document.getElementById('generate-btn'),
             
             outputFormat: document.getElementById('output-format'),
+            downloadInfo: document.getElementById('download-info'),
             
             // Overlays and toasts
             loadingOverlay: document.getElementById('loading-overlay'),
@@ -249,6 +250,13 @@ class UIController {
                 if (stepNumber === 3) {
                     setTimeout(() => {
                         window.app.initializeStep3();
+                    }, 100);
+                }
+                
+                // For step 5, update download info
+                if (stepNumber === 5) {
+                    setTimeout(() => {
+                        this.updateDownloadInfo();
                     }, 100);
                 }
             }
@@ -629,6 +637,11 @@ class UIController {
             this.elements.nextBtn.disabled = false;
             this.showSuccess('High-resolution image generated!');
             
+            // Update download info for next step
+            setTimeout(() => {
+                this.updateDownloadInfo();
+            }, 100);
+            
         } catch (error) {
             this.hideProgress();
             this.elements.generateBtn.disabled = false;
@@ -643,6 +656,24 @@ class UIController {
         const format = e.target.value;
         log('Output format changed:', format);
         window.app?.updateOutputFormat(format);
+    }
+    
+    updateDownloadInfo() {
+        const canvas = window.app?.state?.processedCanvas || window.app?.state?.currentCanvas;
+        if (!canvas || !this.elements.downloadInfo) return;
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        const megapixels = ((width * height) / 1000000).toFixed(1);
+        
+        // Calculate estimated file sizes
+        const jpegHigh = Math.round((width * height * 3 * 0.15) / 1024 / 1024); // ~15% compression
+        const jpegStd = Math.round((width * height * 3 * 0.08) / 1024 / 1024);  // ~8% compression  
+        const pngSize = Math.round((width * height * 4) / 1024 / 1024);         // Uncompressed RGBA
+        
+        this.elements.downloadInfo.innerHTML = 
+            `📁 Current: ${width}×${height}px (${megapixels}MP)<br>` +
+            `💾 JPEG High: ~${jpegHigh}MB | Standard: ~${jpegStd}MB | PNG: ~${pngSize}MB`;
     }
 
     // Before/After Toggle
