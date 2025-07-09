@@ -59,8 +59,7 @@ class SuperResolution {
                 model: {
                     path: this.models[this.currentModel].path,
                     scale: this.models[this.currentModel].scale
-                },
-                warmupSizes: [[256, 256]], // Warm up with small size
+                }
             });
 
             this.isReady = true;
@@ -88,8 +87,7 @@ class SuperResolution {
                 model: {
                     path: this.models[modelId].path,
                     scale: this.models[modelId].scale
-                },
-                warmupSizes: [[256, 256]],
+                }
             });
 
             log('Successfully switched to model:', modelId);
