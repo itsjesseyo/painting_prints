@@ -578,29 +578,30 @@ class UIController {
         }
     }
 
-    handleGenerateHighRes() {
+    async handleGenerateHighRes() {
         log('Generating high-resolution image...');
         this.elements.generateBtn.disabled = true;
         this.elements.generateBtn.textContent = 'Processing...';
         
         this.showProgress('Generating high-resolution image...', 0);
         
-        // Simulate processing
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            this.updateProgress(progress);
+        try {
+            // Call the actual super resolution processing
+            await window.app?.handleGenerateHighRes();
             
-            if (progress >= 100) {
-                clearInterval(interval);
-                this.hideProgress();
-                this.elements.generateBtn.disabled = false;
-                this.elements.generateBtn.textContent = '🚀 Generate High-Resolution';
-                this.elements.nextBtn.disabled = false;
-                this.showSuccess('High-resolution image generated!');
-                window.app?.completeGeneration();
-            }
-        }, 500);
+            this.hideProgress();
+            this.elements.generateBtn.disabled = false;
+            this.elements.generateBtn.textContent = '🚀 Generate High-Resolution';
+            this.elements.nextBtn.disabled = false;
+            this.showSuccess('High-resolution image generated!');
+            
+        } catch (error) {
+            this.hideProgress();
+            this.elements.generateBtn.disabled = false;
+            this.elements.generateBtn.textContent = '🚀 Generate High-Resolution';
+            this.showError('High-resolution generation failed');
+            logError('Generate high-res error:', error);
+        }
     }
 
     // Step 7: Download Handlers

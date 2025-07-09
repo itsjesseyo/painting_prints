@@ -674,17 +674,27 @@ class PaintingEnhancer {
         }
         
         try {
+            log('Starting super resolution processing...');
+            log('Upscaler ready:', this.upscaler.isReady);
+            
             const result = await this.upscaler.processForPrint(
                 this.state.currentCanvas,
                 this.state.settings.targetSize,
                 this.state.settings.outputFormat,
-                (progress) => this.ui.updateProgress(progress)
+                (progress) => {
+                    this.ui.updateProgress(progress);
+                    log(`Super resolution progress: ${progress}%`);
+                }
             );
             
             if (result.success) {
                 this.state.processedCanvas = result.canvas;
                 this.displayImage(result.canvas);
-                log('High-resolution generation completed');
+                log('High-resolution generation completed:', {
+                    originalSize: `${this.state.currentCanvas.width}x${this.state.currentCanvas.height}`,
+                    processedSize: `${result.canvas.width}x${result.canvas.height}`,
+                    targetSize: this.state.settings.targetSize
+                });
             } else {
                 throw new Error(result.error || 'Generation failed');
             }
@@ -1304,6 +1314,14 @@ class PaintingEnhancer {
             this.ui.showError('No image to download');
             return;
         }
+        
+        // Debug: Log canvas dimensions and source
+        log('Download canvas info:', {
+            width: canvas.width,
+            height: canvas.height,
+            isProcessed: !!this.state.processedCanvas,
+            sourceCanvas: this.state.processedCanvas ? 'processedCanvas' : 'currentCanvas'
+        });
         
         try {
             this.ui.showProgress('Preparing download...', 0);
