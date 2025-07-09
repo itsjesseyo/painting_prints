@@ -189,6 +189,11 @@ class UIController {
         
         log(`Navigating to step ${stepNumber}`);
         
+        // Save changes from Step 3 before leaving
+        if (this.currentStep === 3 && stepNumber !== 3) {
+            window.app?.saveStep3Changes();
+        }
+        
         // Hide current step
         this.elements.stepContainers[this.currentStep]?.classList.remove('active');
         this.elements.controlsContainers[this.currentStep]?.classList.remove('active');

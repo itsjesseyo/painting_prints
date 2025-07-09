@@ -425,19 +425,197 @@ class PaintingEnhancer {
     }
     
     initializeStep3() {
-        log('Initializing Step 3: Glare Removal with preview mode');
+        log('Initializing Step 3: Color Correction with preview mode');
         
         // Set preview mode to ON by default
         this.state.step3PreviewMode = true;
         
         // Initialize the preview
-        this.updatePreview();
+        this.updateStep3Preview();
         
         // Set the before/after button state
         const beforeAfterBtn = document.getElementById('before-after-3');
         if (beforeAfterBtn) {
             beforeAfterBtn.textContent = 'Show Original';
             beforeAfterBtn.classList.add('active');
+        }
+    }
+    
+    // Real-time preview update for Step 3 (Color Correction)
+    async updateStep3Preview() {
+        if (!this.state.currentCanvas) {
+            log('No canvas available for Step 3 preview');
+            return;
+        }
+        
+        try {
+            // Start with the current canvas (which may have grid corrections applied)
+            let previewCanvas = this.cloneCanvas(this.state.currentCanvas);
+            
+            // Apply lighting corrections if enabled
+            if (this.state.settings.lightingEnabled && this.state.settings.lightingCorrectionStrength > 0) {
+                const inputMat = this.processor.canvasToMat(previewCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        this.state.settings.lightingCorrectionStrength,
+                        1.0, // Don't apply contrast here, it's handled separately
+                        1.0  // Don't apply saturation here, it's handled separately
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        previewCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            // Apply contrast if enabled
+            if (this.state.settings.contrastEnabled && this.state.settings.contrastBoost !== 1.0) {
+                const inputMat = this.processor.canvasToMat(previewCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        0, // No lighting correction here
+                        this.state.settings.contrastBoost,
+                        1.0  // No saturation here
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        previewCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            // Apply saturation if enabled
+            if (this.state.settings.saturationEnabled && this.state.settings.saturationBoost !== 1.0) {
+                const inputMat = this.processor.canvasToMat(previewCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        0, // No lighting correction here
+                        1.0, // No contrast here
+                        this.state.settings.saturationBoost
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        previewCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            // Apply auto color correction if enabled
+            if (this.state.settings.autoColor) {
+                const inputMat = this.processor.canvasToMat(previewCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.autoColorCorrect(
+                        inputMat,
+                        this.state.settings.colorIntensity / 100
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        previewCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            // Display the preview
+            this.displayImage(previewCanvas);
+            
+            log('Step 3 preview updated with all corrections');
+            
+        } catch (error) {
+            logError('Step 3 preview update failed:', error);
+        }
+    }
+    
+    // Save Step 3 changes to currentCanvas
+    async saveStep3Changes() {
+        if (!this.state.currentCanvas) return;
+        
+        try {
+            log('Saving Step 3 changes to currentCanvas');
+            
+            // Start with the current canvas
+            let processedCanvas = this.cloneCanvas(this.state.currentCanvas);
+            
+            // Apply all enabled corrections in sequence
+            if (this.state.settings.lightingEnabled && this.state.settings.lightingCorrectionStrength > 0) {
+                const inputMat = this.processor.canvasToMat(processedCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        this.state.settings.lightingCorrectionStrength,
+                        1.0,
+                        1.0
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        processedCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            if (this.state.settings.contrastEnabled && this.state.settings.contrastBoost !== 1.0) {
+                const inputMat = this.processor.canvasToMat(processedCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        0,
+                        this.state.settings.contrastBoost,
+                        1.0
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        processedCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            if (this.state.settings.saturationEnabled && this.state.settings.saturationBoost !== 1.0) {
+                const inputMat = this.processor.canvasToMat(processedCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat,
+                        0,
+                        1.0,
+                        this.state.settings.saturationBoost
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        processedCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            if (this.state.settings.autoColor) {
+                const inputMat = this.processor.canvasToMat(processedCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.autoColorCorrect(
+                        inputMat,
+                        this.state.settings.colorIntensity / 100
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        processedCanvas = outputCanvas;
+                    }
+                    cleanupMats(inputMat, correctedMat);
+                }
+            }
+            
+            // Update the current canvas with the processed result
+            this.state.currentCanvas = processedCanvas;
+            
+            log('Step 3 changes saved successfully');
+            
+        } catch (error) {
+            logError('Failed to save Step 3 changes:', error);
         }
     }
     

@@ -525,8 +525,6 @@ input[type="checkbox"] {
     color: white;
     max-width: 300px;
     padding: 40px 20px;
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .startup-content h1 {
