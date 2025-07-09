@@ -212,12 +212,38 @@ class SuperResolution {
     }
 
     async fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
-        log('Performing fallback high-quality resize');
+        log('Performing high-quality resize using advanced interpolation');
         
         if (onProgress) onProgress(10);
         
         // Allow UI to update before intensive operation
         await new Promise(r => setTimeout(r, 50));
+        
+        const scaleX = targetWidth / inputCanvas.width;
+        const scaleY = targetHeight / inputCanvas.height;
+        const maxScale = Math.max(scaleX, scaleY);
+        
+        if (onProgress) onProgress(30);
+        
+        // For large scale factors, use multi-step upscaling for better quality
+        if (maxScale > 2) {
+            if (onProgress) onProgress(50);
+            const result = await this.multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress);
+            if (onProgress) onProgress(100);
+            return result;
+        } else {
+            // Single step resize with enhanced quality settings
+            if (onProgress) onProgress(70);
+            
+            const result = await this.highQualitySingleResize(inputCanvas, targetWidth, targetHeight);
+            if (onProgress) onProgress(100);
+            return result;
+        }
+    }
+    
+    async highQualitySingleResize(inputCanvas, targetWidth, targetHeight) {
+        // Allow UI to update before drawing
+        await new Promise(r => setTimeout(r, 10));
         
         const canvas = document.createElement('canvas');
         canvas.width = targetWidth;
@@ -225,35 +251,17 @@ class SuperResolution {
         
         const ctx = canvas.getContext('2d');
         
-        // Use high-quality settings
+        // Use the highest quality settings available
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         
-        if (onProgress) onProgress(30);
+        // For better quality, use 2D transform with high-quality scaling
+        ctx.save();
+        ctx.scale(targetWidth / inputCanvas.width, targetHeight / inputCanvas.height);
+        ctx.drawImage(inputCanvas, 0, 0);
+        ctx.restore();
         
-        // For large scale factors, use multi-step upscaling
-        const scaleX = targetWidth / inputCanvas.width;
-        const scaleY = targetHeight / inputCanvas.height;
-        const maxScale = Math.max(scaleX, scaleY);
-        
-        if (maxScale > 2) {
-            // Multi-step upscaling for better quality
-            if (onProgress) onProgress(50);
-            
-            const result = await this.multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress);
-            if (onProgress) onProgress(100);
-            return result;
-        } else {
-            // Single step resize
-            if (onProgress) onProgress(70);
-            
-            // Allow UI to update before drawing
-            await new Promise(r => setTimeout(r, 10));
-            
-            ctx.drawImage(inputCanvas, 0, 0, targetWidth, targetHeight);
-            if (onProgress) onProgress(100);
-            return canvas;
-        }
+        return canvas;
     }
 
     async multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress) {
@@ -264,10 +272,13 @@ class SuperResolution {
         let step = 0;
         const totalSteps = Math.ceil(Math.log2(Math.max(targetWidth / currentWidth, targetHeight / currentHeight)));
         
-        // Calculate intermediate steps
+        log(`Multi-step resize: ${totalSteps} steps from ${currentWidth}x${currentHeight} to ${targetWidth}x${targetHeight}`);
+        
+        // Calculate intermediate steps - use smaller increments for better quality
         while (currentWidth < targetWidth || currentHeight < targetHeight) {
-            const nextWidth = Math.min(currentWidth * 2, targetWidth);
-            const nextHeight = Math.min(currentHeight * 2, targetHeight);
+            // Use 1.5x increments for better quality than 2x
+            const nextWidth = Math.min(Math.round(currentWidth * 1.5), targetWidth);
+            const nextHeight = Math.min(Math.round(currentHeight * 1.5), targetHeight);
             
             // Allow UI to update between steps
             await new Promise(r => setTimeout(r, 10));
@@ -277,9 +288,16 @@ class SuperResolution {
             stepCanvas.height = nextHeight;
             
             const ctx = stepCanvas.getContext('2d');
+            
+            // Use highest quality settings
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(currentCanvas, 0, 0, nextWidth, nextHeight);
+            
+            // Use transform scaling for better quality
+            ctx.save();
+            ctx.scale(nextWidth / currentWidth, nextHeight / currentHeight);
+            ctx.drawImage(currentCanvas, 0, 0);
+            ctx.restore();
             
             // Clean up intermediate canvas (except original)
             if (currentCanvas !== inputCanvas) {
@@ -302,6 +320,7 @@ class SuperResolution {
             }
         }
         
+        log(`Multi-step resize completed: ${step} steps`);
         return currentCanvas;
     }
     

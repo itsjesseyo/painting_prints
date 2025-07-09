@@ -250,6 +250,8 @@ class UIController {
                 if (stepNumber === 3) {
                     setTimeout(() => {
                         window.app.initializeStep3();
+                        // Initialize auto color slider state
+                        this.initializeAutoColorState();
                     }, 100);
                 }
                 
@@ -677,6 +679,15 @@ class UIController {
         this.elements.downloadInfo.innerHTML = 
             `📁 Current: ${width}×${height}px (${megapixels}MP)<br>` +
             `💾 JPEG High: ~${jpegHigh}MB | Standard: ~${jpegStd}MB | PNG: ~${pngSize}MB`;
+    }
+    
+    initializeAutoColorState() {
+        // Initialize auto color slider state based on checkbox
+        if (this.elements.autoColor && this.elements.colorIntensitySlider) {
+            const isChecked = this.elements.autoColor.checked;
+            this.elements.colorIntensitySlider.disabled = !isChecked;
+            log('Auto color slider initialized, disabled:', !isChecked);
+        }
     }
 
     // Before/After Toggle
