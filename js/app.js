@@ -1191,10 +1191,8 @@ class PaintingEnhancer {
         
         log('File size estimate updated:', estimate.formatted);
         
-        // Update UI with estimate
-        if (this.ui.elements.fileInfo) {
-            this.ui.elements.fileInfo.innerHTML = `📊 Estimated size: ~${estimate.formatted}`;
-        }
+        // File size info is now displayed in the select options
+        // No need to update separate UI elements
     }
 
     // Debounced preview update for real-time adjustments - optimized for mobile

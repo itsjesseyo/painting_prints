@@ -35,6 +35,8 @@
     .startup-content {
         padding: 20px;
         max-width: 280px;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .startup-content h1 {
