@@ -1,7 +1,7 @@
 class UIController {
     constructor() {
         this.currentStep = 1;
-        this.totalSteps = 6;
+        this.totalSteps = 5;
         this.elements = {};
         this.beforeAfterState = {}; // Track before/after state for each step
     }
@@ -140,13 +140,15 @@ class UIController {
         this.elements.optimizeGrid?.addEventListener('click', () => this.handleOptimizeGrid());
         this.elements.resetGrid?.addEventListener('click', () => this.handleResetGrid());
         
-        // Step 3: Lighting Correction
+        // Step 3: Color Correction (includes lighting, contrast, saturation, and auto color)
         this.elements.lightingStrengthSlider?.addEventListener('input', this.handleLightingStrengthAdjustment.bind(this));
         this.elements.lightingEnabled?.addEventListener('change', this.handleLightingToggle.bind(this));
         this.elements.contrastBoostSlider?.addEventListener('input', this.handleContrastBoostAdjustment.bind(this));
         this.elements.contrastEnabled?.addEventListener('change', this.handleContrastToggle.bind(this));
         this.elements.saturationBoostSlider?.addEventListener('input', this.handleSaturationBoostAdjustment.bind(this));
         this.elements.saturationEnabled?.addEventListener('change', this.handleSaturationToggle.bind(this));
+        this.elements.autoColor?.addEventListener('change', this.handleAutoColorToggle.bind(this));
+        this.elements.colorIntensitySlider?.addEventListener('input', this.handleColorIntensityAdjustment.bind(this));
         this.elements.resetLighting?.addEventListener('click', () => this.resetLightingSettings());
         
         // Debug: Log which Step 3 elements were found
@@ -160,21 +162,16 @@ class UIController {
             resetLighting: !!this.elements.resetLighting
         });
         
-        // Step 4: Color Correction (was Step 5)
-        this.elements.autoColor?.addEventListener('change', this.handleAutoColorToggle.bind(this));
-        this.elements.colorIntensitySlider?.addEventListener('input', this.handleColorIntensityAdjustment.bind(this));
-        
-        // Step 5: Super Resolution (was Step 6)
+        // Step 4: Super Resolution
         this.elements.printSize?.addEventListener('change', this.handlePrintSizeChange.bind(this));
         this.elements.generateBtn?.addEventListener('click', () => this.handleGenerateHighRes());
         
-        // Step 6: Download (was Step 7)
+        // Step 5: Download
         this.elements.outputFormat?.addEventListener('change', this.handleFormatChange.bind(this));
         
-        // Before/After toggles
-        for (let i = 2; i <= 5; i++) {
-            this.elements[`beforeAfter${i}`]?.addEventListener('click', () => this.toggleBeforeAfter(i));
-        }
+        // Before/After toggles (Step 2 and 4 only)
+        this.elements.beforeAfter2?.addEventListener('click', () => this.toggleBeforeAfter(2));
+        this.elements.beforeAfter4?.addEventListener('click', () => this.toggleBeforeAfter(4));
         
         // Toast close buttons
         this.elements.errorClose?.addEventListener('click', () => this.hideError());
@@ -264,8 +261,8 @@ class UIController {
     }
 
     goToNextStep() {
-        if (this.currentStep === 6) {
-            // Download on step 6
+        if (this.currentStep === 5) {
+            // Download on step 5
             window.app?.downloadImage();
         } else if (this.currentStep < this.totalSteps) {
             this.goToStep(this.currentStep + 1);
@@ -304,12 +301,11 @@ class UIController {
 
     updateStepText() {
         const stepTexts = {
-            1: 'Step 1 of 6: Upload Image',
-            2: 'Step 2 of 6: Grid Correction',
-            3: 'Step 3 of 6: Glare Removal',
-            4: 'Step 4 of 6: Color Correction',
-            5: 'Step 5 of 6: Super Resolution',
-            6: 'Step 6 of 6: Download'
+            1: 'Step 1 of 5: Upload Image',
+            2: 'Step 2 of 5: Grid Correction',
+            3: 'Step 3 of 5: Color Correction',
+            4: 'Step 4 of 5: Super Resolution',
+            5: 'Step 5 of 5: Download'
         };
         
         if (this.elements.stepText) {
@@ -323,22 +319,22 @@ class UIController {
             this.elements.backBtn.style.display = this.currentStep > 1 ? 'block' : 'none';
         }
         
-        // Skip button (hide on step 1 and 7)
+        // Skip button (hide on step 1 and 5)
         if (this.elements.skipBtn) {
-            this.elements.skipBtn.style.display = (this.currentStep === 1 || this.currentStep === 7) ? 'none' : 'block';
+            this.elements.skipBtn.style.display = (this.currentStep === 1 || this.currentStep === 5) ? 'none' : 'block';
         }
         
         // Apply button (show for step 2 and 4, but not 3 since it has real-time preview)
         if (this.elements.applyBtn) {
-            this.elements.applyBtn.style.display = (this.currentStep === 2 || this.currentStep === 4) ? 'block' : 'none';
+            this.elements.applyBtn.style.display = (this.currentStep === 2) ? 'block' : 'none';
         }
         
         // Next button
         if (this.elements.nextBtn) {
-            if (this.currentStep === 6) {
+            if (this.currentStep === 5) {
                 this.elements.nextBtn.textContent = '📥 Download';
                 this.elements.nextBtn.disabled = false;
-            } else if (this.currentStep === 6) {
+            } else if (this.currentStep === 4) {
                 this.elements.nextBtn.textContent = 'Next';
                 this.elements.nextBtn.disabled = true; // Enable after generation
             } else {
@@ -539,6 +535,15 @@ class UIController {
         window.app?.updateSaturationEnabled(enabled);
     }
 
+    handleAutoColorToggle(e) {
+        const enabled = e.target.checked;
+        log('🔧 handleAutoColorToggle called with enabled:', enabled);
+        if (this.elements.colorIntensitySlider) {
+            this.elements.colorIntensitySlider.disabled = !enabled;
+        }
+        window.app?.updateAutoColorEnabled(enabled);
+    }
+
     resetLightingSettings() {
         // Reset sliders and values
         if (this.elements.lightingStrengthSlider) {
@@ -554,35 +559,40 @@ class UIController {
             this.elements.saturationBoostValue.textContent = '1.24';
         }
         
-        // Reset checkboxes to enabled and enable sliders
+        // Reset color intensity slider and value
+        if (this.elements.colorIntensitySlider) {
+            this.elements.colorIntensitySlider.value = 75;
+            this.elements.colorIntensityValue.textContent = '75';
+        }
+        
+        // Reset checkboxes to disabled (false) and disable sliders
         if (this.elements.lightingEnabled) {
-            this.elements.lightingEnabled.checked = true;
+            this.elements.lightingEnabled.checked = false;
             if (this.elements.lightingStrengthSlider) {
-                this.elements.lightingStrengthSlider.disabled = false;
+                this.elements.lightingStrengthSlider.disabled = true;
             }
         }
         if (this.elements.contrastEnabled) {
-            this.elements.contrastEnabled.checked = true;
+            this.elements.contrastEnabled.checked = false;
             if (this.elements.contrastBoostSlider) {
-                this.elements.contrastBoostSlider.disabled = false;
+                this.elements.contrastBoostSlider.disabled = true;
             }
         }
         if (this.elements.saturationEnabled) {
-            this.elements.saturationEnabled.checked = true;
+            this.elements.saturationEnabled.checked = false;
             if (this.elements.saturationBoostSlider) {
-                this.elements.saturationBoostSlider.disabled = false;
+                this.elements.saturationBoostSlider.disabled = true;
+            }
+        }
+        if (this.elements.autoColor) {
+            this.elements.autoColor.checked = false;
+            if (this.elements.colorIntensitySlider) {
+                this.elements.colorIntensitySlider.disabled = true;
             }
         }
         
         log('Lighting settings reset');
         window.app?.resetLightingSettings();
-    }
-
-    // Step 5: Color Correction Handlers
-    handleAutoColorToggle(e) {
-        const enabled = e.target.checked;
-        log('Auto color correction:', enabled ? 'enabled' : 'disabled');
-        window.app?.toggleAutoColor(enabled);
     }
 
     handleColorIntensityAdjustment(e) {

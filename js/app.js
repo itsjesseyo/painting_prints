@@ -1,7 +1,7 @@
 class PaintingEnhancer {
     constructor() {
         this.currentStep = 1;
-        this.totalSteps = 6;
+        this.totalSteps = 5;
         this.state = {
             originalFile: null,
             originalCanvas: null,
@@ -12,12 +12,12 @@ class PaintingEnhancer {
             settings: {
                 gridCorrection: null,
                 lightingCorrectionStrength: 10, // 0-100%
-                lightingEnabled: true,
+                lightingEnabled: false,
                 contrastBoost: 1.10, // 1.0 - 3.0
-                contrastEnabled: true,
+                contrastEnabled: false,
                 saturationBoost: 1.24, // 1.0 - 3.0
-                saturationEnabled: true,
-                autoColor: true,
+                saturationEnabled: false,
+                autoColor: false,
                 colorIntensity: 75,
                 targetSize: '24x30',
                 outputFormat: 'jpeg-95'
@@ -651,9 +651,13 @@ class PaintingEnhancer {
     }
 
 
-    toggleAutoColor(enabled) {
+    updateAutoColorEnabled(enabled) {
         this.state.settings.autoColor = enabled;
         log('Auto color correction:', enabled ? 'enabled' : 'disabled');
+        // Trigger real-time preview update if on step 3
+        if (this.currentStep === 3) {
+            this.updateStep3Preview();
+        }
     }
 
     updateColorIntensity(value) {

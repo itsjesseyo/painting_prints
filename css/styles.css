@@ -249,42 +249,42 @@ body {
     margin-bottom: 16px;
 }
 
-/* Step 3 specific layout - compact three-column layout */
+/* Step 3 specific layout - compact four-column layout */
 #controls-3 .control-group {
     margin-bottom: 12px;
 }
 
 #controls-3 .control-row {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
-#controls-3 .control-third {
+#controls-3 .control-fourth {
     flex: 1;
     min-width: 0; /* Allow flex items to shrink below content size */
 }
 
-#controls-3 .control-third .control-label {
-    font-size: 12px;
+#controls-3 .control-fourth .control-label {
+    font-size: 11px;
     margin-bottom: 6px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
-#controls-3 .control-third .control-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+#controls-3 .control-fourth .control-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
     margin: 0;
     flex-shrink: 0;
 }
 
-#controls-3 .control-third .slider {
+#controls-3 .control-fourth .slider {
     width: 100%;
 }
 
-#controls-3 .control-third .slider:disabled {
+#controls-3 .control-fourth .slider:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
