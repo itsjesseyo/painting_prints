@@ -225,7 +225,7 @@ class SuperResolution {
             if (!dimensionCheck.canHandle) {
                 log('WebGL limits exceeded:', dimensionCheck.reason);
                 log('Falling back to high-quality resize');
-                return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
+                return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
             }
 
             // Calculate scale factor needed
@@ -279,7 +279,7 @@ class SuperResolution {
                 }
                 
                 // Fallback to high-quality resize
-                return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
+                return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
             }
             
             // Monitor memory after upscaling
@@ -308,7 +308,7 @@ class SuperResolution {
         } catch (error) {
             logError('Upscaling failed:', error);
             // Fallback to simple resize
-            return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
+            return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
         }
     }
 
@@ -327,70 +327,74 @@ class SuperResolution {
                     clearInterval(interval);
                     
                     // Perform high-quality resize as fallback
-                    const result = this.fallbackResize(inputCanvas, targetWidth, targetHeight);
-                    resolve(result);
+                    this.fallbackResize(inputCanvas, targetWidth, targetHeight).then(result => {
+                        resolve(result);
+                    });
                 }
             }, 300);
         });
     }
 
-    fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
-        return new Promise(async (resolve) => {
-            log('Performing fallback high-quality resize');
+    async fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
+        log('Performing fallback high-quality resize');
+        
+        if (onProgress) onProgress(10);
+        
+        // Allow UI to update before intensive operation
+        await new Promise(r => setTimeout(r, 50));
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Use high-quality settings
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        if (onProgress) onProgress(30);
+        
+        // For large scale factors, use multi-step upscaling
+        const scaleX = targetWidth / inputCanvas.width;
+        const scaleY = targetHeight / inputCanvas.height;
+        const maxScale = Math.max(scaleX, scaleY);
+        
+        if (maxScale > 2) {
+            // Multi-step upscaling for better quality
+            if (onProgress) onProgress(50);
             
-            if (onProgress) onProgress(10);
+            const result = await this.multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress);
+            if (onProgress) onProgress(100);
+            return result;
+        } else {
+            // Single step resize
+            if (onProgress) onProgress(70);
             
-            // Allow UI to update before intensive operation
-            await new Promise(r => setTimeout(r, 50));
+            // Allow UI to update before drawing
+            await new Promise(r => setTimeout(r, 10));
             
-            const canvas = document.createElement('canvas');
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Use high-quality settings
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            
-            if (onProgress) onProgress(30);
-            
-            // For large scale factors, use multi-step upscaling
-            const scaleX = targetWidth / inputCanvas.width;
-            const scaleY = targetHeight / inputCanvas.height;
-            const maxScale = Math.max(scaleX, scaleY);
-            
-            if (maxScale > 2) {
-                // Multi-step upscaling for better quality
-                if (onProgress) onProgress(50);
-                
-                setTimeout(() => {
-                    const result = this.multiStepResize(inputCanvas, targetWidth, targetHeight);
-                    if (onProgress) onProgress(100);
-                    resolve(result);
-                }, 10);
-            } else {
-                // Single step resize
-                if (onProgress) onProgress(70);
-                
-                setTimeout(() => {
-                    ctx.drawImage(inputCanvas, 0, 0, targetWidth, targetHeight);
-                    if (onProgress) onProgress(100);
-                    resolve(canvas);
-                }, 10);
-            }
-        });
+            ctx.drawImage(inputCanvas, 0, 0, targetWidth, targetHeight);
+            if (onProgress) onProgress(100);
+            return canvas;
+        }
     }
 
-    multiStepResize(inputCanvas, targetWidth, targetHeight) {
+    async multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress) {
         let currentCanvas = inputCanvas;
         let currentWidth = inputCanvas.width;
         let currentHeight = inputCanvas.height;
+        
+        let step = 0;
+        const totalSteps = Math.ceil(Math.log2(Math.max(targetWidth / currentWidth, targetHeight / currentHeight)));
         
         // Calculate intermediate steps
         while (currentWidth < targetWidth || currentHeight < targetHeight) {
             const nextWidth = Math.min(currentWidth * 2, targetWidth);
             const nextHeight = Math.min(currentHeight * 2, targetHeight);
+            
+            // Allow UI to update between steps
+            await new Promise(r => setTimeout(r, 10));
             
             const stepCanvas = document.createElement('canvas');
             stepCanvas.width = nextWidth;
@@ -409,6 +413,13 @@ class SuperResolution {
             currentCanvas = stepCanvas;
             currentWidth = nextWidth;
             currentHeight = nextHeight;
+            
+            // Update progress
+            step++;
+            if (onProgress) {
+                const progress = 50 + Math.round((step / totalSteps) * 40); // 50-90%
+                onProgress(progress);
+            }
             
             if (nextWidth === targetWidth && nextHeight === targetHeight) {
                 break;
