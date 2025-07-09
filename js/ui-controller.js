@@ -24,7 +24,6 @@ class UIController {
             
             // Navigation buttons
             backBtn: document.getElementById('back-btn'),
-            skipBtn: document.getElementById('skip-btn'),
             applyBtn: document.getElementById('apply-btn'),
             nextBtn: document.getElementById('next-btn'),
             
@@ -92,7 +91,6 @@ class UIController {
         log('UI elements cached');
         log('Navigation elements found:', {
             backBtn: !!this.elements.backBtn,
-            skipBtn: !!this.elements.skipBtn,
             applyBtn: !!this.elements.applyBtn,
             nextBtn: !!this.elements.nextBtn
         });
@@ -107,12 +105,6 @@ class UIController {
             });
         }
         
-        if (this.elements.skipBtn) {
-            this.elements.skipBtn.addEventListener('click', () => {
-                log('Skip button clicked');
-                this.skipCurrentStep();
-            });
-        }
         
         if (this.elements.applyBtn) {
             this.elements.applyBtn.addEventListener('click', () => {
@@ -273,10 +265,6 @@ class UIController {
         }
     }
 
-    skipCurrentStep() {
-        log(`Skipping step ${this.currentStep}`);
-        this.goToNextStep();
-    }
 
     applyCurrentStep() {
         log(`Applying step ${this.currentStep}`);
@@ -317,10 +305,6 @@ class UIController {
             this.elements.backBtn.style.display = this.currentStep > 1 ? 'block' : 'none';
         }
         
-        // Skip button (hide on step 1 and 5)
-        if (this.elements.skipBtn) {
-            this.elements.skipBtn.style.display = (this.currentStep === 1 || this.currentStep === 5) ? 'none' : 'block';
-        }
         
         // Apply button (show for step 2 and 4, but not 3 since it has real-time preview)
         if (this.elements.applyBtn) {
@@ -332,9 +316,6 @@ class UIController {
             if (this.currentStep === 5) {
                 this.elements.nextBtn.textContent = '📥 Download';
                 this.elements.nextBtn.disabled = false;
-            } else if (this.currentStep === 4) {
-                this.elements.nextBtn.textContent = 'Next';
-                this.elements.nextBtn.disabled = true; // Enable after generation
             } else {
                 this.elements.nextBtn.textContent = 'Next';
                 // On step 1, only disable if no file has been uploaded
@@ -345,7 +326,7 @@ class UIController {
                     }
                     // If file exists, keep button enabled (don't change current state)
                 } else {
-                    // For other steps, enable by default
+                    // For all other steps, enable by default (including step 4)
                     this.elements.nextBtn.disabled = false;
                 }
             }

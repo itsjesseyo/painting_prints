@@ -150,6 +150,11 @@
         gap: 16px;
     }
     
+    /* Ensure buttons fill available space */
+    #navigation .btn {
+        min-width: 0;
+    }
+    
     #navigation .btn {
         padding: 16px 12px;
         font-size: 16px;
