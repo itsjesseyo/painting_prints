@@ -154,12 +154,33 @@ class SuperResolution {
             finalWidth = Math.round(target.h * aspectRatio);
         }
         
+        // Check WebGL limits and constrain if necessary
+        const dimensionCheck = this.canHandleDimensions(finalWidth, finalHeight);
+        if (!dimensionCheck.canHandle) {
+            log('Target dimensions exceed WebGL limits, constraining:', {
+                original: `${finalWidth}x${finalHeight}`,
+                constrained: `${dimensionCheck.suggestedWidth}x${dimensionCheck.suggestedHeight}`
+            });
+            
+            // Maintain aspect ratio while constraining to limits
+            const constrainedRatio = dimensionCheck.suggestedWidth / dimensionCheck.suggestedHeight;
+            if (aspectRatio > constrainedRatio) {
+                finalWidth = dimensionCheck.suggestedWidth;
+                finalHeight = Math.round(finalWidth / aspectRatio);
+            } else {
+                finalHeight = dimensionCheck.suggestedHeight;
+                finalWidth = Math.round(finalHeight * aspectRatio);
+            }
+        }
+        
         return {
             width: finalWidth,
             height: finalHeight,
             originalAspectRatio: aspectRatio,
             targetAspectRatio: targetRatio,
-            aspectRatioMatch: Math.abs(aspectRatio - targetRatio) < 0.1
+            aspectRatioMatch: Math.abs(aspectRatio - targetRatio) < 0.1,
+            wasConstrained: !dimensionCheck.canHandle,
+            constrainedReason: dimensionCheck.reason
         };
     }
 
@@ -199,6 +220,14 @@ class SuperResolution {
                 return this.simulateUpscaling(inputCanvas, targetWidth, targetHeight, onProgress);
             }
 
+            // Check WebGL dimension limits
+            const dimensionCheck = this.canHandleDimensions(targetWidth, targetHeight);
+            if (!dimensionCheck.canHandle) {
+                log('WebGL limits exceeded:', dimensionCheck.reason);
+                log('Falling back to high-quality resize');
+                return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
+            }
+
             // Calculate scale factor needed
             const scaleX = targetWidth / inputCanvas.width;
             const scaleY = targetHeight / inputCanvas.height;
@@ -220,11 +249,37 @@ class SuperResolution {
                 }
             };
             
-            // Perform upscaling
-            const upscaledCanvas = await this.upscaler.upscale(inputCanvas, {
-                output: 'canvas',
-                progressCallback: progressCallback
-            });
+            // Add memory monitoring
+            const memoryBefore = tf.memory();
+            log('Memory before upscaling:', memoryBefore);
+            
+            // Perform upscaling with error handling
+            let upscaledCanvas;
+            try {
+                upscaledCanvas = await this.upscaler.upscale(inputCanvas, {
+                    output: 'canvas',
+                    progressCallback: progressCallback
+                });
+            } catch (webglError) {
+                logError('WebGL upscaling failed:', webglError);
+                
+                // Cleanup any allocated memory
+                if (tf && tf.disposeVariables) {
+                    tf.disposeVariables();
+                }
+                
+                // Force garbage collection if available
+                if (window.gc) {
+                    window.gc();
+                }
+                
+                // Fallback to high-quality resize
+                return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
+            }
+            
+            // Monitor memory after upscaling
+            const memoryAfter = tf.memory();
+            log('Memory after upscaling:', memoryAfter);
             
             // If the upscaled result doesn't match exact target dimensions,
             // resize to exact dimensions
@@ -248,7 +303,7 @@ class SuperResolution {
         } catch (error) {
             logError('Upscaling failed:', error);
             // Fallback to simple resize
-            return this.fallbackResize(inputCanvas, targetWidth, targetHeight);
+            return this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
         }
     }
 
@@ -274,32 +329,49 @@ class SuperResolution {
         });
     }
 
-    fallbackResize(inputCanvas, targetWidth, targetHeight) {
-        log('Performing fallback high-quality resize');
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Use high-quality settings
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
-        // For large scale factors, use multi-step upscaling
-        const scaleX = targetWidth / inputCanvas.width;
-        const scaleY = targetHeight / inputCanvas.height;
-        const maxScale = Math.max(scaleX, scaleY);
-        
-        if (maxScale > 2) {
-            // Multi-step upscaling for better quality
-            return this.multiStepResize(inputCanvas, targetWidth, targetHeight);
-        } else {
-            // Single step resize
-            ctx.drawImage(inputCanvas, 0, 0, targetWidth, targetHeight);
-            return canvas;
-        }
+    fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
+        return new Promise((resolve) => {
+            log('Performing fallback high-quality resize');
+            
+            if (onProgress) onProgress(10);
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Use high-quality settings
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            if (onProgress) onProgress(30);
+            
+            // For large scale factors, use multi-step upscaling
+            const scaleX = targetWidth / inputCanvas.width;
+            const scaleY = targetHeight / inputCanvas.height;
+            const maxScale = Math.max(scaleX, scaleY);
+            
+            if (maxScale > 2) {
+                // Multi-step upscaling for better quality
+                if (onProgress) onProgress(50);
+                
+                setTimeout(() => {
+                    const result = this.multiStepResize(inputCanvas, targetWidth, targetHeight);
+                    if (onProgress) onProgress(100);
+                    resolve(result);
+                }, 10);
+            } else {
+                // Single step resize
+                if (onProgress) onProgress(70);
+                
+                setTimeout(() => {
+                    ctx.drawImage(inputCanvas, 0, 0, targetWidth, targetHeight);
+                    if (onProgress) onProgress(100);
+                    resolve(canvas);
+                }, 10);
+            }
+        });
     }
 
     multiStepResize(inputCanvas, targetWidth, targetHeight) {
@@ -425,13 +497,48 @@ class SuperResolution {
         return capabilities;
     }
 
+    canHandleDimensions(width, height) {
+        const webGL = this.checkWebGL();
+        if (!webGL.supported) {
+            return { canHandle: false, reason: 'WebGL not supported' };
+        }
+
+        const maxDimension = Math.min(webGL.maxTextureSize, 16384); // Conservative limit
+        const exceedsWidth = width > maxDimension;
+        const exceedsHeight = height > maxDimension;
+
+        if (exceedsWidth || exceedsHeight) {
+            return {
+                canHandle: false,
+                reason: `Dimensions ${width}x${height} exceed WebGL limit ${maxDimension}x${maxDimension}`,
+                maxDimension: maxDimension,
+                suggestedWidth: Math.min(width, maxDimension),
+                suggestedHeight: Math.min(height, maxDimension)
+            };
+        }
+
+        return { canHandle: true };
+    }
+
     checkWebGL() {
         try {
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            return !!gl;
+            if (!gl) return { supported: false };
+            
+            // Get WebGL limits
+            const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            const maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+            
+            return {
+                supported: true,
+                maxTextureSize: maxTextureSize,
+                maxRenderbufferSize: maxRenderbufferSize,
+                vendor: gl.getParameter(gl.VENDOR),
+                renderer: gl.getParameter(gl.RENDERER)
+            };
         } catch (e) {
-            return false;
+            return { supported: false, error: e.message };
         }
     }
 
@@ -455,7 +562,32 @@ class SuperResolution {
             }
             this.upscaler = null;
         }
+
+        // TensorFlow.js memory cleanup
+        this.cleanupMemory();
+        
         this.isReady = false;
         log('SuperResolution cleaned up');
+    }
+
+    cleanupMemory() {
+        try {
+            if (typeof tf !== 'undefined') {
+                // Dispose variables and clean up GPU memory
+                tf.disposeVariables();
+                
+                // Log memory status
+                const memory = tf.memory();
+                log('Memory after cleanup:', memory);
+                
+                // Force garbage collection if available (Chrome with --expose-gc flag)
+                if (window.gc) {
+                    window.gc();
+                    log('Forced garbage collection');
+                }
+            }
+        } catch (error) {
+            logError('Error during memory cleanup:', error);
+        }
     }
 }
