@@ -8,10 +8,22 @@ const PORT = process.env.PORT || 8080;
 
 // Serve static files from the current directory
 app.use(express.static('.', {
-    // Set proper MIME types for JavaScript modules
+    // Set proper MIME types for JavaScript modules and model files
     setHeaders: (res, path) => {
         if (path.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
+        }
+        if (path.endsWith('.json')) {
+            res.setHeader('Content-Type', 'application/json');
+        }
+        if (path.endsWith('.bin')) {
+            res.setHeader('Content-Type', 'application/octet-stream');
+        }
+        // Add CORS headers for model files
+        if (path.includes('/models/')) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         }
     }
 }));

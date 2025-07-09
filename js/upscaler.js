@@ -3,15 +3,29 @@ class SuperResolution {
         this.upscaler = null;
         this.isReady = false;
         this.models = {
-            'esrgan-medium': {
-                name: 'ESRGAN Medium',
-                scale: 4,
-                quality: 'balanced'
-            },
-            'esrgan-small': {
-                name: 'ESRGAN Small',
+            'esrgan-medium-x2': {
+                name: 'ESRGAN Medium 2x',
                 scale: 2,
-                quality: 'fast'
+                quality: 'balanced',
+                path: 'models/esrgan-medium/x2/model.json'
+            },
+            'esrgan-medium-x3': {
+                name: 'ESRGAN Medium 3x',
+                scale: 3,
+                quality: 'balanced',
+                path: 'models/esrgan-medium/x3/model.json'
+            },
+            'esrgan-medium-x4': {
+                name: 'ESRGAN Medium 4x',
+                scale: 4,
+                quality: 'balanced',
+                path: 'models/esrgan-medium/x4/model.json'
+            },
+            'esrgan-medium-x8': {
+                name: 'ESRGAN Medium 8x',
+                scale: 8,
+                quality: 'high',
+                path: 'models/esrgan-medium/x8/model.json'
             }
         };
     }
@@ -27,14 +41,19 @@ class SuperResolution {
                 return false;
             }
 
-            // Initialize UpscalerJS with appropriate model
+            // Initialize with a default model (4x) for now
+            // We'll change models dynamically based on requirements
+            this.currentModel = 'esrgan-medium-x4';
             this.upscaler = new Upscaler({
-                model: 'esrgan-medium',
+                model: {
+                    path: this.models[this.currentModel].path,
+                    scale: this.models[this.currentModel].scale
+                },
                 warmupSizes: [[256, 256]], // Warm up with small size
             });
 
             this.isReady = true;
-            log('Super Resolution initialized successfully');
+            log('Super Resolution initialized successfully with model:', this.currentModel);
             return true;
             
         } catch (error) {
@@ -42,6 +61,52 @@ class SuperResolution {
             this.isReady = false;
             return false;
         }
+    }
+
+    async switchModel(modelId) {
+        log('Switching to model:', modelId);
+        
+        if (!this.models[modelId]) {
+            logError('Model not found:', modelId);
+            return false;
+        }
+
+        try {
+            this.currentModel = modelId;
+            this.upscaler = new Upscaler({
+                model: {
+                    path: this.models[modelId].path,
+                    scale: this.models[modelId].scale
+                },
+                warmupSizes: [[256, 256]],
+            });
+
+            log('Successfully switched to model:', modelId);
+            return true;
+            
+        } catch (error) {
+            logError('Failed to switch model:', error);
+            return false;
+        }
+    }
+
+    selectOptimalModel(requiredScale) {
+        // Find the best model for the required scale
+        const availableScales = Object.keys(this.models)
+            .map(key => ({ key, scale: this.models[key].scale }))
+            .sort((a, b) => a.scale - b.scale);
+
+        // Find the smallest scale that can handle the requirement
+        let bestModel = availableScales[availableScales.length - 1]; // Default to largest
+        
+        for (const model of availableScales) {
+            if (model.scale >= requiredScale) {
+                bestModel = model;
+                break;
+            }
+        }
+
+        return bestModel.key;
     }
 
     calculateOptimalDimensions(inputWidth, inputHeight, targetSize) {
@@ -132,6 +197,13 @@ class SuperResolution {
             
             log(`Upscaling from ${inputCanvas.width}x${inputCanvas.height} to ${targetWidth}x${targetHeight} (${scale.toFixed(2)}x)`);
             
+            // Select optimal model for the required scale
+            const optimalModel = this.selectOptimalModel(scale);
+            if (optimalModel !== this.currentModel) {
+                log(`Switching to optimal model: ${optimalModel} for scale ${scale.toFixed(2)}x`);
+                await this.switchModel(optimalModel);
+            }
+            
             // Progress callback wrapper
             const progressCallback = (progress) => {
                 if (onProgress) {
@@ -153,6 +225,8 @@ class SuperResolution {
                 finalCanvas.height = targetHeight;
                 
                 const ctx = finalCanvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(upscaledCanvas, 0, 0, targetWidth, targetHeight);
                 
                 log('Upscaling completed with final resize');
