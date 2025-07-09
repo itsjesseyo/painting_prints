@@ -46,6 +46,12 @@
         font-size: 14px;
     }
     
+    /* Ensure startup spinner centers on mobile */
+    .startup-content .spinner {
+        margin: 0 auto 15px auto;
+        display: block;
+    }
+    
     /* Prevent horizontal scroll */
     body, html {
         overflow-x: hidden;
