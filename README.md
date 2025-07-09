@@ -1,156 +1,88 @@
 # Painting Enhancement Tool
 
-A mobile-first browser-based application for enhancing iPhone Pro photographs of paintings for print-on-demand services.
-
-## Project Status
-
-✅ **Milestone 1 Complete**: UI Implementation & Navigation Flow
-- Complete 7-step interface implementation
-- Mobile-first responsive design  
-- Working navigation system
-- All controls implemented with visual feedback
-- Stubbed functionality with console logging
+A mobile-first browser application for enhancing iPhone Pro painting photographs for print-on-demand services.
 
 ## Features
 
-### 7-Step Enhancement Workflow
-1. **Upload** - iPhone Pro photograph input with drag & drop
-2. **Lens Correction** - Barrel distortion correction with real-time slider
-3. **Perspective Correction** - Auto-detect + manual corner adjustment  
-4. **Glare Removal** - Brightness/contrast adjustment with live preview
-5. **Color Correction** - Auto white balance and enhancement controls
-6. **Super Resolution** - AI upscaling to print quality (300 DPI)
-7. **Download** - JPEG/PNG export with format options
+- **Step 1**: Image Upload with drag & drop support
+- **Step 2**: 5x5 Grid Distortion Correction
+- **Step 3**: Advanced Lighting Correction (glare removal, contrast & saturation boost)
+- **Step 4**: Auto Color Correction
+- **Step 5**: Super Resolution upscaling
+- **Step 6**: Download in multiple formats
 
-### Technical Implementation
-- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Image Processing**: OpenCV.js (WebAssembly)
-- **Super Resolution**: UpscalerJS (TensorFlow.js)
-- **Target Platform**: Mobile browsers (iPhone Safari priority)
-
-## Project Structure
-
-```
-painting-enhancer/
-├── index.html              # Main application page
-├── css/
-│   ├── styles.css          # Core styling and layout
-│   └── mobile.css          # Mobile-specific optimizations
-├── js/
-│   ├── app.js             # Main application controller
-│   ├── ui-controller.js   # UI management and event handling
-│   ├── image-processor.js # OpenCV.js image processing
-│   ├── upscaler.js        # Super-resolution processing
-│   └── utils.js           # Utility functions and helpers
-├── assets/
-│   └── icons/             # UI icons (to be added)
-├── opencv.js              # OpenCV.js library
-├── claude.md              # Complete technical specification
-├── milestone_roadmap.md   # Development milestones
-├── painting_enhancement_sop.md # Standard operating procedure
-├── ui_mockups.html        # Interactive UI mockups
-└── README.md              # This file
-```
-
-## Current Implementation Status
-
-### ✅ Completed
-- **Project Setup**: Complete file structure and build system
-- **HTML Foundation**: Semantic structure with mobile viewport
-- **CSS Framework**: Mobile-first responsive design with touch-friendly controls
-- **JavaScript Modules**: All 5 core modules implemented with stubbed functionality
-- **Navigation System**: Working 7-step navigation with progress tracking
-- **UI Components**: All form controls, sliders, buttons, and visual feedback
-- **Error Handling**: Toast notifications and loading states
-- **File Upload**: Drag & drop with validation
-- **Settings Management**: Real-time control updates
-
-### 🔄 Stubbed (Ready for Implementation)
-- **OpenCV.js Integration**: Image processing pipeline ready
-- **UpscalerJS Integration**: Super-resolution processing ready  
-- **Canvas Management**: Image display and manipulation
-- **Memory Management**: OpenCV Mat cleanup system
-- **Performance Optimization**: Debounced updates and progress tracking
-
-## Getting Started
+## Development Setup
 
 ### Prerequisites
-- Modern web browser with WebAssembly support
-- Local web server (for CORS compatibility)
 
-### Quick Start
-1. **Clone/Download** the project files
-2. **Serve locally** using a web server:
-   ```bash
-   # Using Python 3
-   python -m http.server 8000
-   
-   # Using Node.js (http-server)
-   npx http-server
-   
-   # Using PHP
-   php -S localhost:8000
-   ```
-3. **Open** `http://localhost:8000` in your browser
-4. **Test** the UI and navigation flow
+- Node.js (v14 or higher)
+- npm
 
-### Mobile Testing
-- **iPhone Safari**: Primary target platform
-- **Chrome Mobile**: Secondary support
-- **Developer Tools**: Use device simulation for testing
+### Installation
 
-## Development Workflow
+```bash
+npm install
+```
 
-### Next Steps (Milestone 2)
-1. **Image Upload & Processing Foundation**
-   - Integrate OpenCV.js initialization
-   - Implement canvas-based image rendering
-   - Add file format conversion utilities
-   - Complete memory management system
+### Development Server
 
-2. **Core Processing Implementation**
-   - Connect UI controls to actual image processing
-   - Implement real-time preview updates
-   - Add before/after comparison functionality
-   - Complete error handling and recovery
+Start the development server with auto-reload:
 
-### Key Considerations
-- **Memory Management**: Explicit OpenCV Mat cleanup required
-- **Canvas Limits**: Safari 16.7M pixel maximum  
-- **Performance**: Mobile-optimized processing with progress indicators
-- **Error Handling**: Graceful fallbacks for unsupported features
+```bash
+npm run start:dev
+```
 
-## Technical Notes
+This will:
+- Start a Node.js server on http://localhost:8080
+- Watch for changes in `.js`, `.html`, and `.css` files
+- Automatically restart the server when files change
+- Serve static files with proper MIME types
 
-### Browser Compatibility
-- **WebAssembly**: Required for OpenCV.js
-- **Canvas 2D**: Image rendering and manipulation
-- **File API**: Upload and download functionality
-- **ES6+**: Modern JavaScript features
+### Production Server
 
-### Performance Optimizations
-- **Debounced Updates**: Prevent excessive processing during slider adjustments
-- **Progressive Enhancement**: Core functionality first, enhancements second
-- **Memory Monitoring**: Track and clean up OpenCV Mat objects
-- **Canvas Size Validation**: Respect browser memory limits
+Start the production server:
 
-### Security Considerations
-- **Client-Side Only**: No server uploads required
-- **CORS Policy**: Handle cross-origin resource loading
-- **Input Validation**: Sanitize all user inputs
-- **Memory Safety**: Prevent DoS through large images
+```bash
+npm start
+```
 
-## Documentation
+## Technical Stack
 
-- **`claude.md`**: Complete technical specification with implementation details
-- **`milestone_roadmap.md`**: 9-milestone development plan with acceptance criteria
-- **`painting_enhancement_sop.md`**: Standard operating procedure and architecture
-- **`ui_mockups.html`**: Interactive UI/UX mockups for all 7 steps
+- **Frontend**: Vanilla JavaScript, HTML5 Canvas, CSS3
+- **Image Processing**: OpenCV.js
+- **Super Resolution**: UpscalerJS
+- **Mobile Optimization**: Responsive design, touch events
+- **Development**: Node.js + Express + Nodemon
 
-## License
+## File Structure
 
-Public Domain (Unlicense) - See `LICENSE` file
+```
+├── css/
+│   ├── styles.css      # Main styles
+│   └── mobile.css      # Mobile-specific styles
+├── js/
+│   ├── app.js          # Main application logic
+│   ├── image-processor.js  # OpenCV image processing
+│   ├── ui-controller.js    # UI management
+│   ├── upscaler.js     # Super resolution
+│   └── utils.js        # Utility functions
+├── opencv.js           # OpenCV.js library
+├── index.html          # Main HTML file
+├── server.js           # Development server
+└── package.json        # npm configuration
+```
 
-## Support
+## Usage
 
-This is a development project. For implementation questions, refer to the comprehensive documentation in `claude.md` and the milestone roadmap.
+1. Upload an iPhone Pro painting photo
+2. Adjust the 5x5 grid to correct lens distortion
+3. Use lighting correction to remove glare and enhance contrast
+4. Apply auto color correction if needed
+5. Generate high-resolution output
+6. Download the enhanced image
+
+## Browser Support
+
+- Chrome/Safari (recommended for iPhone compatibility)
+- Modern browsers with WebAssembly support
+- Mobile browsers (iOS Safari, Chrome Mobile)

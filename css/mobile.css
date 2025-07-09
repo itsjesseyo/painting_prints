@@ -4,6 +4,21 @@
         font-size: 16px; /* Prevent zoom on focus */
     }
     
+    /* Step 3 mobile layout adjustments */
+    #controls-3 .control-row {
+        gap: 8px; /* Smaller gap on mobile */
+    }
+    
+    #controls-3 .control-half .control-label {
+        font-size: 12px; /* Smaller labels on mobile */
+    }
+    
+    #controls-3 .reset-btn {
+        font-size: 12px;
+        padding: 6px 8px;
+        margin-top: 16px;
+    }
+    
     /* Startup screen mobile optimization */
     .startup-content {
         padding: 20px;

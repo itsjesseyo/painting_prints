@@ -45,11 +45,13 @@ class UIController {
             resetGrid: document.getElementById('reset-grid'),
             
             
-            brightnessSlider: document.getElementById('brightness-slider'),
-            brightnessValue: document.getElementById('brightness-value'),
-            contrastSlider: document.getElementById('contrast-slider'),
-            contrastValue: document.getElementById('contrast-value'),
-            resetGlare: document.getElementById('reset-glare'),
+            lightingStrengthSlider: document.getElementById('lighting-strength-slider'),
+            lightingStrengthValue: document.getElementById('lighting-strength-value'),
+            contrastBoostSlider: document.getElementById('contrast-boost-slider'),
+            contrastBoostValue: document.getElementById('contrast-boost-value'),
+            saturationBoostSlider: document.getElementById('saturation-boost-slider'),
+            saturationBoostValue: document.getElementById('saturation-boost-value'),
+            resetLighting: document.getElementById('reset-lighting'),
             
             autoColor: document.getElementById('auto-color'),
             colorIntensitySlider: document.getElementById('color-intensity-slider'),
@@ -135,11 +137,22 @@ class UIController {
         this.elements.optimizeGrid?.addEventListener('click', () => this.handleOptimizeGrid());
         this.elements.resetGrid?.addEventListener('click', () => this.handleResetGrid());
         
-        // Step 3: Glare Removal (was Step 4)
+        // Step 3: Lighting Correction
+        this.elements.lightingStrengthSlider?.addEventListener('input', this.handleLightingStrengthAdjustment.bind(this));
+        this.elements.contrastBoostSlider?.addEventListener('input', this.handleContrastBoostAdjustment.bind(this));
+        this.elements.saturationBoostSlider?.addEventListener('input', this.handleSaturationBoostAdjustment.bind(this));
+        this.elements.resetLighting?.addEventListener('click', () => this.resetLightingSettings());
         
-        this.elements.brightnessSlider?.addEventListener('input', this.handleBrightnessAdjustment.bind(this));
-        this.elements.contrastSlider?.addEventListener('input', this.handleContrastAdjustment.bind(this));
-        this.elements.resetGlare?.addEventListener('click', () => this.resetGlareSettings());
+        // Debug: Log which Step 3 elements were found
+        log('Step 3 elements found:', {
+            lightingStrengthSlider: !!this.elements.lightingStrengthSlider,
+            lightingStrengthValue: !!this.elements.lightingStrengthValue,
+            contrastBoostSlider: !!this.elements.contrastBoostSlider,
+            contrastBoostValue: !!this.elements.contrastBoostValue,
+            saturationBoostSlider: !!this.elements.saturationBoostSlider,
+            saturationBoostValue: !!this.elements.saturationBoostValue,
+            resetLighting: !!this.elements.resetLighting
+        });
         
         // Step 4: Color Correction (was Step 5)
         this.elements.autoColor?.addEventListener('change', this.handleAutoColorToggle.bind(this));
@@ -233,6 +246,13 @@ class UIController {
                         window.app.initializeGridStep();
                     }, 500); // Longer delay to ensure canvas is rendered
                 }
+                
+                // For step 3, initialize with preview mode on
+                if (stepNumber === 3) {
+                    setTimeout(() => {
+                        window.app.initializeStep3();
+                    }, 100);
+                }
             }
         }
     }
@@ -302,9 +322,9 @@ class UIController {
             this.elements.skipBtn.style.display = (this.currentStep === 1 || this.currentStep === 7) ? 'none' : 'block';
         }
         
-        // Apply button (show for steps 2-4)
+        // Apply button (show for step 2 and 4, but not 3 since it has real-time preview)
         if (this.elements.applyBtn) {
-            this.elements.applyBtn.style.display = (this.currentStep >= 2 && this.currentStep <= 4) ? 'block' : 'none';
+            this.elements.applyBtn.style.display = (this.currentStep === 2 || this.currentStep === 4) ? 'block' : 'none';
         }
         
         // Next button
@@ -446,36 +466,61 @@ class UIController {
         window.app?.startCornerDrag(corner, e);
     }
 
-    // Step 4: Glare Removal Handlers
-    handleBrightnessAdjustment(e) {
+    // Step 3: Lighting Correction Handlers
+    handleLightingStrengthAdjustment(e) {
         const value = parseInt(e.target.value);
-        if (this.elements.brightnessValue) {
-            this.elements.brightnessValue.textContent = value;
+        log('🔧 handleLightingStrengthAdjustment called with value:', value);
+        if (this.elements.lightingStrengthValue) {
+            this.elements.lightingStrengthValue.textContent = value;
+            log('✅ Updated UI value display to:', value);
+        } else {
+            log('❌ lightingStrengthValue element not found');
         }
-        log('Brightness adjustment:', value);
-        window.app?.updateBrightness(value);
+        log('📞 Calling window.app?.updateLightingCorrectionStrength');
+        window.app?.updateLightingCorrectionStrength(value);
     }
 
-    handleContrastAdjustment(e) {
+    handleContrastBoostAdjustment(e) {
         const value = parseFloat(e.target.value);
-        if (this.elements.contrastValue) {
-            this.elements.contrastValue.textContent = value.toFixed(1);
+        log('🔧 handleContrastBoostAdjustment called with value:', value);
+        if (this.elements.contrastBoostValue) {
+            this.elements.contrastBoostValue.textContent = value.toFixed(2);
+            log('✅ Updated UI value display to:', value.toFixed(2));
+        } else {
+            log('❌ contrastBoostValue element not found');
         }
-        log('Contrast adjustment:', value);
-        window.app?.updateContrast(value);
+        log('📞 Calling window.app?.updateContrastBoost');
+        window.app?.updateContrastBoost(value);
     }
 
-    resetGlareSettings() {
-        if (this.elements.brightnessSlider) {
-            this.elements.brightnessSlider.value = 0;
-            this.elements.brightnessValue.textContent = '0';
+    handleSaturationBoostAdjustment(e) {
+        const value = parseFloat(e.target.value);
+        log('🔧 handleSaturationBoostAdjustment called with value:', value);
+        if (this.elements.saturationBoostValue) {
+            this.elements.saturationBoostValue.textContent = value.toFixed(2);
+            log('✅ Updated UI value display to:', value.toFixed(2));
+        } else {
+            log('❌ saturationBoostValue element not found');
         }
-        if (this.elements.contrastSlider) {
-            this.elements.contrastSlider.value = 1.0;
-            this.elements.contrastValue.textContent = '1.0';
+        log('📞 Calling window.app?.updateSaturationBoost');
+        window.app?.updateSaturationBoost(value);
+    }
+
+    resetLightingSettings() {
+        if (this.elements.lightingStrengthSlider) {
+            this.elements.lightingStrengthSlider.value = 10;
+            this.elements.lightingStrengthValue.textContent = '10';
         }
-        log('Glare settings reset');
-        window.app?.resetGlareSettings();
+        if (this.elements.contrastBoostSlider) {
+            this.elements.contrastBoostSlider.value = 1.10;
+            this.elements.contrastBoostValue.textContent = '1.10';
+        }
+        if (this.elements.saturationBoostSlider) {
+            this.elements.saturationBoostSlider.value = 1.24;
+            this.elements.saturationBoostValue.textContent = '1.24';
+        }
+        log('Lighting settings reset');
+        window.app?.resetLightingSettings();
     }
 
     // Step 5: Color Correction Handlers

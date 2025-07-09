@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lighting Correction with Enhancements</title>
+  <script>
+    window.Module = {
+      onRuntimeInitialized() {
+        console.log("✅ OpenCV.js is ready!");
+        document.getElementById('fileInput').disabled = false;
+        document.getElementById('strengthSlider').disabled = false;
+        document.getElementById('contrastSlider').disabled = false;
+        document.getElementById('saturationSlider').disabled = false;
+        setupListeners();
+      }
+    };
+  </script>
+  <script src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+  <style>
+    body { font-family: sans-serif; }
+    canvas { border: 1px solid black; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Upload Painting Photo</h2>
+  <input type="file" id="fileInput" disabled>
+  <br><br>
+
+  <h3>Enhancements</h3>
+  <label>Correction Strength:</label>
+  <input type="range" id="strengthSlider" min="0" max="100" value="100" disabled>
+  <span id="strengthValue">100%</span>
+  <br><br>
+
+  <label>Contrast Boost:</label>
+  <input type="range" id="contrastSlider" min="100" max="300" value="120" disabled>
+  <span id="contrastValue">1.20x</span>
+  <br><br>
+
+  <label>Saturation Boost:</label>
+  <input type="range" id="saturationSlider" min="100" max="300" value="120" disabled>
+  <span id="saturationValue">1.20x</span>
+  <br><br>
+
+  <canvas id="canvasOutput"></canvas>
+
+  <script type="text/javascript">
+    let originalMat = null;
+    let correctedMat = null;
+
+    function removeUnevenLighting(src) {
+      let gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+      let background = new cv.Mat();
+      let ksize = new cv.Size(55, 55);
+      cv.GaussianBlur(gray, background, ksize, 0, 0, cv.BORDER_DEFAULT);
+
+      let backgroundColor = new cv.Mat();
+      cv.cvtColor(background, backgroundColor, cv.COLOR_GRAY2RGBA);
+
+      let result = new cv.Mat();
+      cv.divide(src, backgroundColor, result, 1, -1);
+      cv.normalize(result, result, 0, 255, cv.NORM_MINMAX);
+
+      gray.delete();
+      background.delete();
+      backgroundColor.delete();
+
+      return result;
+    }
+
+    function applyContrast(mat, alpha) {
+      let result = new cv.Mat();
+      cv.convertScaleAbs(mat, result, alpha, 0);
+      return result;
+    }
+
+    function applySaturation(mat, satFactor) {
+      let hsv = new cv.Mat();
+      cv.cvtColor(mat, hsv, cv.COLOR_RGBA2RGB);
+      cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
+
+      let hsvPlanes = new cv.MatVector();
+      cv.split(hsv, hsvPlanes);
+
+      let s = hsvPlanes.get(1);
+      cv.convertScaleAbs(s, s, satFactor, 0);
+      hsvPlanes.set(1, s);
+
+      cv.merge(hsvPlanes, hsv);
+      cv.cvtColor(hsv, hsv, cv.COLOR_HSV2RGB);
+      cv.cvtColor(hsv, hsv, cv.COLOR_RGB2RGBA);
+
+      hsvPlanes.delete();
+      s.delete();
+      return hsv;
+    }
+
+    function updateCanvas() {
+      if (!originalMat || !correctedMat) return;
+
+      let alpha = document.getElementById('strengthSlider').value / 100.0;
+      let contrastFactor = document.getElementById('contrastSlider').value / 100.0;
+      let saturationFactor = document.getElementById('saturationSlider').value / 100.0;
+
+      document.getElementById('strengthValue').innerText = document.getElementById('strengthSlider').value + '%';
+      document.getElementById('contrastValue').innerText = contrastFactor.toFixed(2) + 'x';
+      document.getElementById('saturationValue').innerText = saturationFactor.toFixed(2) + 'x';
+
+      let blended = new cv.Mat();
+      cv.addWeighted(correctedMat, alpha, originalMat, 1 - alpha, 0, blended);
+
+      let contrastMat = applyContrast(blended, contrastFactor);
+      blended.delete();
+
+      let saturatedMat = applySaturation(contrastMat, saturationFactor);
+      contrastMat.delete();
+
+      cv.imshow('canvasOutput', saturatedMat);
+      saturatedMat.delete();
+    }
+
+    function setupListeners() {
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        let file = e.target.files[0];
+        let reader = new FileReader();
+        reader.onload = function(ev) {
+          let img = new Image();
+          img.onload = function() {
+            let canvas = document.getElementById('canvasOutput');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            if (originalMat) originalMat.delete();
+            if (correctedMat) correctedMat.delete();
+
+            let tmp = cv.imread(canvas);
+            if (tmp.channels() === 3) {
+              originalMat = new cv.Mat();
+              cv.cvtColor(tmp, originalMat, cv.COLOR_RGB2RGBA);
+              tmp.delete();
+            } else if (tmp.channels() === 4) {
+              originalMat = tmp;
+            } else {
+              tmp.delete();
+              alert("Unsupported image type");
+              return;
+            }
+
+            correctedMat = removeUnevenLighting(originalMat);
+            updateCanvas();
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      ['strengthSlider', 'contrastSlider', 'saturationSlider'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateCanvas);
+      });
+    }
+  </script>
+</body>
+</html>

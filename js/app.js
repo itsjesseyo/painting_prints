@@ -11,8 +11,9 @@ class PaintingEnhancer {
             step3PreviewMode: false, // Add preview mode state for Step 3
             settings: {
                 gridCorrection: null,
-                brightness: 0,
-                contrast: 1.0,
+                lightingCorrectionStrength: 10, // 0-100%
+                contrastBoost: 1.10, // 1.0 - 3.0
+                saturationBoost: 1.24, // 1.0 - 3.0
                 autoColor: true,
                 colorIntensity: 75,
                 targetSize: '24x30',
@@ -105,7 +106,7 @@ class PaintingEnhancer {
                 this.applyGridCorrection();
                 break;
             case 3:
-                this.applyGlareRemoval();
+                this.applyLightingCorrection();
                 break;
             case 4:
                 this.applyColorCorrection();
@@ -175,14 +176,14 @@ class PaintingEnhancer {
         }
     }
 
-    async applyGlareRemoval() {
+    async applyLightingCorrection() {
         if (!this.state.currentCanvas) {
             log('Skipping glare removal: no canvas');
             return;
         }
         
-        if (this.state.settings.brightness === 0 && this.state.settings.contrast === 1.0) {
-            log('Skipping glare removal: no adjustments needed');
+        if (this.state.settings.lightingCorrectionStrength === 0 && this.state.settings.contrastBoost === 1.0 && this.state.settings.saturationBoost === 1.0) {
+            log('Skipping lighting correction: no adjustments needed');
             return;
         }
         
@@ -195,10 +196,11 @@ class PaintingEnhancer {
             }
             
             this.ui.updateProgress(30);
-            const adjustedMat = this.processor.adjustBrightnessContrast(
+            const adjustedMat = this.processor.applyLightingCorrection(
                 inputMat,
-                this.state.settings.brightness,
-                this.state.settings.contrast
+                this.state.settings.lightingCorrectionStrength,
+                this.state.settings.contrastBoost,
+                this.state.settings.saturationBoost
             );
             
             this.ui.updateProgress(70);
@@ -216,12 +218,12 @@ class PaintingEnhancer {
             this.ui.updateProgress(100);
             setTimeout(() => this.ui.hideProgress(), 500);
             
-            log('Glare removal applied successfully');
+            log('Lighting correction applied successfully');
             
         } catch (error) {
             this.ui.hideProgress();
-            this.ui.showError('Glare removal failed: ' + error.message);
-            logError('Glare removal error:', error);
+            this.ui.showError('Lighting correction failed: ' + error.message);
+            logError('Lighting correction error:', error);
         }
     }
 
@@ -645,48 +647,6 @@ class PaintingEnhancer {
         document.addEventListener('touchend', handleDragEnd);
     }
 
-    updateBrightness(value) {
-        this.state.settings.brightness = value;
-        log('Brightness updated:', value);
-        
-        // Real-time preview for brightness (only if preview mode is on)
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
-            this.debouncedPreviewUpdate();
-        }
-    }
-
-    updateContrast(value) {
-        this.state.settings.contrast = value;
-        log('Contrast updated:', value);
-        
-        // Real-time preview for contrast (only if preview mode is on)
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
-            this.debouncedPreviewUpdate();
-        }
-    }
-
-    resetGlareSettings() {
-        this.state.settings.brightness = 0;
-        this.state.settings.contrast = 1.0;
-        
-        // Update UI sliders
-        const brightnessSlider = document.getElementById('brightness-slider');
-        const brightnessValue = document.getElementById('brightness-value');
-        const contrastSlider = document.getElementById('contrast-slider');
-        const contrastValue = document.getElementById('contrast-value');
-        
-        if (brightnessSlider) brightnessSlider.value = 0;
-        if (brightnessValue) brightnessValue.textContent = '0';
-        if (contrastSlider) contrastSlider.value = 1.0;
-        if (contrastValue) contrastValue.textContent = '1.0';
-        
-        // Update preview if in Step 3 and preview mode is on
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
-            this.debouncedPreviewUpdate();
-        }
-        
-        log('Glare settings reset');
-    }
 
     toggleAutoColor(enabled) {
         this.state.settings.autoColor = enabled;
@@ -799,7 +759,7 @@ class PaintingEnhancer {
             log(`Step ${step} toggled to:`, showAfter ? 'after' : 'before');
             
             if (showAfter) {
-                if (step === 3 && (this.state.settings.brightness !== 0 || this.state.settings.contrast !== 1.0)) {
+                if (step === 3 && (this.state.settings.lightingCorrectionStrength !== 0 || this.state.settings.contrastBoost !== 1.0 || this.state.settings.saturationBoost !== 1.0)) {
                     this.updatePreview();
                 } else if (this.state.currentCanvas) {
                     this.displayImage(this.state.currentCanvas);
@@ -1237,21 +1197,20 @@ class PaintingEnhancer {
                     this.cloneCanvas(this.state.currentCanvas) : 
                     this.cloneCanvas(this.state.originalCanvas);
                 
-                // Apply brightness/contrast preview
-                if (this.state.settings.brightness !== 0 || this.state.settings.contrast !== 1.0) {
-                    const inputMat = this.processor.canvasToMat(currentCanvas);
-                    if (inputMat) {
-                        const adjustedMat = this.processor.adjustBrightnessContrast(
-                            inputMat, 
-                            this.state.settings.brightness, 
-                            this.state.settings.contrast
-                        );
-                        const outputCanvas = this.processor.matToCanvas(adjustedMat);
-                        if (outputCanvas) {
-                            currentCanvas = outputCanvas;
-                        }
-                        cleanupMats(inputMat, adjustedMat);
+                // Apply lighting correction preview
+                const inputMat = this.processor.canvasToMat(currentCanvas);
+                if (inputMat) {
+                    const correctedMat = this.processor.applyLightingCorrection(
+                        inputMat, 
+                        this.state.settings.lightingCorrectionStrength,
+                        this.state.settings.contrastBoost,
+                        this.state.settings.saturationBoost
+                    );
+                    const outputCanvas = this.processor.matToCanvas(correctedMat);
+                    if (outputCanvas) {
+                        currentCanvas = outputCanvas;
                     }
+                    cleanupMats(inputMat, correctedMat);
                 }
             } else {
                 // For other steps, start with original image
@@ -1264,6 +1223,77 @@ class PaintingEnhancer {
             
         } catch (error) {
             logError('Preview update failed:', error);
+        }
+    }
+
+    // Lighting Correction Settings Update Methods
+    updateLightingCorrectionStrength(value) {
+        log('🎯 updateLightingCorrectionStrength called with:', value);
+        log('Current step:', this.ui.currentStep, 'Step3PreviewMode:', this.state.step3PreviewMode);
+        this.state.settings.lightingCorrectionStrength = value;
+        log('✅ Settings updated. New value:', this.state.settings.lightingCorrectionStrength);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
+        } else {
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+        }
+    }
+
+    updateContrastBoost(value) {
+        log('🎯 updateContrastBoost called with:', value);
+        this.state.settings.contrastBoost = value;
+        log('✅ Settings updated. New value:', this.state.settings.contrastBoost);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
+        } else {
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+        }
+    }
+
+    updateSaturationBoost(value) {
+        log('🎯 updateSaturationBoost called with:', value);
+        this.state.settings.saturationBoost = value;
+        log('✅ Settings updated. New value:', this.state.settings.saturationBoost);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
+        } else {
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+        }
+    }
+
+    resetLightingSettings() {
+        this.state.settings.lightingCorrectionStrength = 10;
+        this.state.settings.contrastBoost = 1.10;
+        this.state.settings.saturationBoost = 1.24;
+        log('Lighting settings reset to defaults');
+        
+        // Update UI elements
+        const lightingSlider = document.getElementById('lighting-strength-slider');
+        const lightingValue = document.getElementById('lighting-strength-value');
+        const contrastSlider = document.getElementById('contrast-boost-slider');
+        const contrastValue = document.getElementById('contrast-boost-value');
+        const saturationSlider = document.getElementById('saturation-boost-slider');
+        const saturationValue = document.getElementById('saturation-boost-value');
+        
+        if (lightingSlider) lightingSlider.value = 10;
+        if (lightingValue) lightingValue.textContent = '10';
+        if (contrastSlider) contrastSlider.value = 1.10;
+        if (contrastValue) contrastValue.textContent = '1.10';
+        if (saturationSlider) saturationSlider.value = 1.24;
+        if (saturationValue) saturationValue.textContent = '1.24';
+        
+        // Update preview
+        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+            this.updatePreview();
         }
     }
 

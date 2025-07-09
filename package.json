@@ -1,0 +1,27 @@
+{
+  "name": "painting-enhancement-tool",
+  "version": "1.0.0",
+  "description": "Mobile-first browser application for enhancing iPhone Pro painting photographs for print-on-demand services",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "start:dev": "nodemon server.js --watch . --ext js,html,css --ignore node_modules --ignore server.log",
+    "test": "echo \"No tests specified yet\" && exit 0"
+  },
+  "keywords": [
+    "image-processing",
+    "opencv",
+    "mobile",
+    "painting",
+    "enhancement"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mime-types": "^2.1.35"
+  }
+}

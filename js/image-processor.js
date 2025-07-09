@@ -430,21 +430,135 @@ class ImageProcessor {
         return { map1, map2 };
     }
 
-    // Step 4: Glare Removal
+    // Step 3: Advanced Lighting Correction
+    applyLightingCorrection(inputMat, correctionStrength, contrastBoost, saturationBoost) {
+        if (!this.isOpenCVReady) {
+            log('OpenCV not available, skipping lighting correction');
+            return inputMat.clone();
+        }
+
+        // Validate input parameters
+        const validatedStrength = Math.max(0, Math.min(100, correctionStrength)) / 100.0;
+        const validatedContrast = Math.max(1.0, Math.min(3.0, contrastBoost));
+        const validatedSaturation = Math.max(1.0, Math.min(3.0, saturationBoost));
+        
+        log('Applying lighting correction - strength:', validatedStrength, 'contrast:', validatedContrast, 'saturation:', validatedSaturation);
+        
+        try {
+            // Step 1: Remove uneven lighting
+            const correctedMat = this.removeUnevenLighting(inputMat);
+            
+            // Step 2: Blend corrected image with original based on strength
+            let blendedMat = new cv.Mat();
+            cv.addWeighted(correctedMat, validatedStrength, inputMat, 1 - validatedStrength, 0, blendedMat);
+            correctedMat.delete();
+            
+            // Step 3: Apply contrast boost
+            let contrastMat = new cv.Mat();
+            cv.convertScaleAbs(blendedMat, contrastMat, validatedContrast, 0);
+            blendedMat.delete();
+            
+            // Step 4: Apply saturation boost
+            const saturatedMat = this.applySaturationBoost(contrastMat, validatedSaturation);
+            contrastMat.delete();
+            
+            return saturatedMat;
+            
+        } catch (error) {
+            logError('Lighting correction failed:', error);
+            return inputMat.clone();
+        }
+    }
+
+    // Remove uneven lighting using Gaussian blur background estimation
+    removeUnevenLighting(inputMat) {
+        try {
+            // Convert to grayscale for background estimation
+            let gray = new cv.Mat();
+            cv.cvtColor(inputMat, gray, cv.COLOR_RGBA2GRAY);
+
+            // Create background estimation using Gaussian blur
+            let background = new cv.Mat();
+            const ksize = new cv.Size(55, 55);
+            cv.GaussianBlur(gray, background, ksize, 0, 0, cv.BORDER_DEFAULT);
+
+            // Convert background to RGBA for division
+            let backgroundColor = new cv.Mat();
+            cv.cvtColor(background, backgroundColor, cv.COLOR_GRAY2RGBA);
+
+            // Divide original image by background to remove uneven lighting
+            let result = new cv.Mat();
+            cv.divide(inputMat, backgroundColor, result, 1, -1);
+            
+            // Normalize result to 0-255 range
+            cv.normalize(result, result, 0, 255, cv.NORM_MINMAX);
+
+            // Cleanup
+            cleanupMats(gray, background, backgroundColor);
+
+            return result;
+            
+        } catch (error) {
+            logError('Uneven lighting removal failed:', error);
+            return inputMat.clone();
+        }
+    }
+
+    // Apply saturation boost using HSV color space
+    applySaturationBoost(inputMat, saturationFactor) {
+        try {
+            // Convert RGBA to RGB then to HSV
+            let rgb = new cv.Mat();
+            cv.cvtColor(inputMat, rgb, cv.COLOR_RGBA2RGB);
+            
+            let hsv = new cv.Mat();
+            cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV);
+            rgb.delete();
+
+            // Split HSV channels
+            let hsvPlanes = new cv.MatVector();
+            cv.split(hsv, hsvPlanes);
+
+            // Get saturation channel and boost it
+            let s = hsvPlanes.get(1);
+            cv.convertScaleAbs(s, s, saturationFactor, 0);
+            hsvPlanes.set(1, s);
+
+            // Merge channels back
+            cv.merge(hsvPlanes, hsv);
+            
+            // Convert back to RGBA
+            let result = new cv.Mat();
+            cv.cvtColor(hsv, result, cv.COLOR_HSV2RGB);
+            cv.cvtColor(result, result, cv.COLOR_RGB2RGBA);
+
+            // Cleanup
+            hsvPlanes.delete();
+            s.delete();
+            hsv.delete();
+
+            return result;
+            
+        } catch (error) {
+            logError('Saturation boost failed:', error);
+            return inputMat.clone();
+        }
+    }
+
+    // Legacy brightness/contrast adjustment method (for backward compatibility)
     adjustBrightnessContrast(inputMat, brightness, contrast) {
         if (!this.isOpenCVReady) {
             log('OpenCV not available, skipping brightness/contrast adjustment');
             return inputMat.clone();
         }
 
-        log('Adjusting brightness:', brightness, 'contrast:', contrast);
+        log('Applying brightness/contrast adjustment - brightness:', brightness, 'contrast:', contrast);
         
         try {
             let outputMat = new cv.Mat();
             
-            // Apply brightness and contrast
-            // alpha = contrast (0.5 to 2.0)
-            // beta = brightness (-100 to +100)
+            // Apply brightness and contrast using convertScaleAbs
+            // Formula: output = contrast * input + brightness
             cv.convertScaleAbs(inputMat, outputMat, contrast, brightness);
             
             return outputMat;

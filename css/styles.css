@@ -249,6 +249,38 @@ body {
     margin-bottom: 16px;
 }
 
+/* Step 3 specific layout - compact two-column layout */
+#controls-3 .control-group {
+    margin-bottom: 12px;
+}
+
+#controls-3 .control-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#controls-3 .control-half {
+    flex: 1;
+    min-width: 0; /* Allow flex items to shrink below content size */
+}
+
+#controls-3 .control-half .control-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+#controls-3 .control-half .slider {
+    width: 100%;
+}
+
+#controls-3 .reset-btn {
+    width: 100%;
+    margin-top: 20px; /* Align with the slider visually */
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
 .control-label {
     font-size: 14px;
     font-weight: 500;

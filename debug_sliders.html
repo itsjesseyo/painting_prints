@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Sliders</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .slider-group { margin: 20px 0; }
+        .slider { width: 300px; }
+        #debug-output { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 20px 0; 
+            border-radius: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Slider Debug Test</h1>
+    
+    <div class="slider-group">
+        <label>Lighting Correction: <span id="lighting-strength-value">10</span>%</label><br>
+        <input type="range" class="slider" id="lighting-strength-slider" min="0" max="100" value="10">
+    </div>
+    
+    <div class="slider-group">
+        <label>Contrast Boost: <span id="contrast-boost-value">1.10</span>x</label><br>
+        <input type="range" class="slider" id="contrast-boost-slider" min="1.0" max="3.0" value="1.10" step="0.05">
+    </div>
+    
+    <div class="slider-group">
+        <label>Saturation Boost: <span id="saturation-boost-value">1.24</span>x</label><br>
+        <input type="range" class="slider" id="saturation-boost-slider" min="1.0" max="3.0" value="1.24" step="0.05">
+    </div>
+    
+    <button id="reset-lighting">Reset</button>
+    
+    <div id="debug-output">
+        <h3>Debug Output:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(message);
+        }
+
+        // Test if elements exist
+        log('=== Element Existence Check ===');
+        const lightingSlider = document.getElementById('lighting-strength-slider');
+        const lightingValue = document.getElementById('lighting-strength-value');
+        const contrastSlider = document.getElementById('contrast-boost-slider');
+        const contrastValue = document.getElementById('contrast-boost-value');
+        const saturationSlider = document.getElementById('saturation-boost-slider');
+        const saturationValue = document.getElementById('saturation-boost-value');
+        const resetBtn = document.getElementById('reset-lighting');
+
+        log(`lightingSlider exists: ${!!lightingSlider}`);
+        log(`lightingValue exists: ${!!lightingValue}`);
+        log(`contrastSlider exists: ${!!contrastSlider}`);
+        log(`contrastValue exists: ${!!contrastValue}`);
+        log(`saturationSlider exists: ${!!saturationSlider}`);
+        log(`saturationValue exists: ${!!saturationValue}`);
+        log(`resetBtn exists: ${!!resetBtn}`);
+
+        // Test event listeners
+        log('=== Adding Event Listeners ===');
+        
+        if (lightingSlider) {
+            lightingSlider.addEventListener('input', function(e) {
+                const value = parseInt(e.target.value);
+                if (lightingValue) lightingValue.textContent = value;
+                log(`Lighting strength changed to: ${value}`);
+            });
+            log('Lighting slider event listener added');
+        }
+
+        if (contrastSlider) {
+            contrastSlider.addEventListener('input', function(e) {
+                const value = parseFloat(e.target.value);
+                if (contrastValue) contrastValue.textContent = value.toFixed(2);
+                log(`Contrast boost changed to: ${value}`);
+            });
+            log('Contrast slider event listener added');
+        }
+
+        if (saturationSlider) {
+            saturationSlider.addEventListener('input', function(e) {
+                const value = parseFloat(e.target.value);
+                if (saturationValue) saturationValue.textContent = value.toFixed(2);
+                log(`Saturation boost changed to: ${value}`);
+            });
+            log('Saturation slider event listener added');
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                log('Reset button clicked');
+                if (lightingSlider) lightingSlider.value = 10;
+                if (lightingValue) lightingValue.textContent = '10';
+                if (contrastSlider) contrastSlider.value = 1.10;
+                if (contrastValue) contrastValue.textContent = '1.10';
+                if (saturationSlider) saturationSlider.value = 1.24;
+                if (saturationValue) saturationValue.textContent = '1.24';
+                log('Values reset to defaults');
+            });
+            log('Reset button event listener added');
+        }
+
+        log('=== Initial Values ===');
+        log(`Lighting initial: ${lightingSlider?.value}`);
+        log(`Contrast initial: ${contrastSlider?.value}`);
+        log(`Saturation initial: ${saturationSlider?.value}`);
+        
+        log('=== Test Complete - Try moving the sliders ===');
+    </script>
+</body>
+</html>
