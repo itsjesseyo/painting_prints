@@ -47,10 +47,13 @@ class UIController {
             
             lightingStrengthSlider: document.getElementById('lighting-strength-slider'),
             lightingStrengthValue: document.getElementById('lighting-strength-value'),
+            lightingEnabled: document.getElementById('lighting-enabled'),
             contrastBoostSlider: document.getElementById('contrast-boost-slider'),
             contrastBoostValue: document.getElementById('contrast-boost-value'),
+            contrastEnabled: document.getElementById('contrast-enabled'),
             saturationBoostSlider: document.getElementById('saturation-boost-slider'),
             saturationBoostValue: document.getElementById('saturation-boost-value'),
+            saturationEnabled: document.getElementById('saturation-enabled'),
             resetLighting: document.getElementById('reset-lighting'),
             
             autoColor: document.getElementById('auto-color'),
@@ -139,8 +142,11 @@ class UIController {
         
         // Step 3: Lighting Correction
         this.elements.lightingStrengthSlider?.addEventListener('input', this.handleLightingStrengthAdjustment.bind(this));
+        this.elements.lightingEnabled?.addEventListener('change', this.handleLightingToggle.bind(this));
         this.elements.contrastBoostSlider?.addEventListener('input', this.handleContrastBoostAdjustment.bind(this));
+        this.elements.contrastEnabled?.addEventListener('change', this.handleContrastToggle.bind(this));
         this.elements.saturationBoostSlider?.addEventListener('input', this.handleSaturationBoostAdjustment.bind(this));
+        this.elements.saturationEnabled?.addEventListener('change', this.handleSaturationToggle.bind(this));
         this.elements.resetLighting?.addEventListener('click', () => this.resetLightingSettings());
         
         // Debug: Log which Step 3 elements were found
@@ -506,7 +512,35 @@ class UIController {
         window.app?.updateSaturationBoost(value);
     }
 
+    handleLightingToggle(e) {
+        const enabled = e.target.checked;
+        log('🔧 handleLightingToggle called with enabled:', enabled);
+        if (this.elements.lightingStrengthSlider) {
+            this.elements.lightingStrengthSlider.disabled = !enabled;
+        }
+        window.app?.updateLightingEnabled(enabled);
+    }
+
+    handleContrastToggle(e) {
+        const enabled = e.target.checked;
+        log('🔧 handleContrastToggle called with enabled:', enabled);
+        if (this.elements.contrastBoostSlider) {
+            this.elements.contrastBoostSlider.disabled = !enabled;
+        }
+        window.app?.updateContrastEnabled(enabled);
+    }
+
+    handleSaturationToggle(e) {
+        const enabled = e.target.checked;
+        log('🔧 handleSaturationToggle called with enabled:', enabled);
+        if (this.elements.saturationBoostSlider) {
+            this.elements.saturationBoostSlider.disabled = !enabled;
+        }
+        window.app?.updateSaturationEnabled(enabled);
+    }
+
     resetLightingSettings() {
+        // Reset sliders and values
         if (this.elements.lightingStrengthSlider) {
             this.elements.lightingStrengthSlider.value = 10;
             this.elements.lightingStrengthValue.textContent = '10';
@@ -519,6 +553,27 @@ class UIController {
             this.elements.saturationBoostSlider.value = 1.24;
             this.elements.saturationBoostValue.textContent = '1.24';
         }
+        
+        // Reset checkboxes to enabled and enable sliders
+        if (this.elements.lightingEnabled) {
+            this.elements.lightingEnabled.checked = true;
+            if (this.elements.lightingStrengthSlider) {
+                this.elements.lightingStrengthSlider.disabled = false;
+            }
+        }
+        if (this.elements.contrastEnabled) {
+            this.elements.contrastEnabled.checked = true;
+            if (this.elements.contrastBoostSlider) {
+                this.elements.contrastBoostSlider.disabled = false;
+            }
+        }
+        if (this.elements.saturationEnabled) {
+            this.elements.saturationEnabled.checked = true;
+            if (this.elements.saturationBoostSlider) {
+                this.elements.saturationBoostSlider.disabled = false;
+            }
+        }
+        
         log('Lighting settings reset');
         window.app?.resetLightingSettings();
     }

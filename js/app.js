@@ -12,8 +12,11 @@ class PaintingEnhancer {
             settings: {
                 gridCorrection: null,
                 lightingCorrectionStrength: 10, // 0-100%
+                lightingEnabled: true,
                 contrastBoost: 1.10, // 1.0 - 3.0
+                contrastEnabled: true,
                 saturationBoost: 1.24, // 1.0 - 3.0
+                saturationEnabled: true,
                 autoColor: true,
                 colorIntensity: 75,
                 targetSize: '24x30',
@@ -198,9 +201,9 @@ class PaintingEnhancer {
             this.ui.updateProgress(30);
             const adjustedMat = this.processor.applyLightingCorrection(
                 inputMat,
-                this.state.settings.lightingCorrectionStrength,
-                this.state.settings.contrastBoost,
-                this.state.settings.saturationBoost
+                this.state.settings.lightingEnabled ? this.state.settings.lightingCorrectionStrength : 0,
+                this.state.settings.contrastEnabled ? this.state.settings.contrastBoost : 1.0,
+                this.state.settings.saturationEnabled ? this.state.settings.saturationBoost : 1.0
             );
             
             this.ui.updateProgress(70);
@@ -1212,9 +1215,9 @@ class PaintingEnhancer {
                 if (inputMat) {
                     const correctedMat = this.processor.applyLightingCorrection(
                         inputMat, 
-                        this.state.settings.lightingCorrectionStrength,
-                        this.state.settings.contrastBoost,
-                        this.state.settings.saturationBoost
+                        this.state.settings.lightingEnabled ? this.state.settings.lightingCorrectionStrength : 0,
+                        this.state.settings.contrastEnabled ? this.state.settings.contrastBoost : 1.0,
+                        this.state.settings.saturationEnabled ? this.state.settings.saturationBoost : 1.0
                     );
                     const outputCanvas = this.processor.matToCanvas(correctedMat);
                     if (outputCanvas) {
@@ -1239,16 +1242,15 @@ class PaintingEnhancer {
     // Lighting Correction Settings Update Methods
     updateLightingCorrectionStrength(value) {
         log('🎯 updateLightingCorrectionStrength called with:', value);
-        log('Current step:', this.ui.currentStep, 'Step3PreviewMode:', this.state.step3PreviewMode);
         this.state.settings.lightingCorrectionStrength = value;
         log('✅ Settings updated. New value:', this.state.settings.lightingCorrectionStrength);
         
         // Real-time preview for Step 3
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+        if (this.ui.currentStep === 3) {
             log('🔄 Triggering preview update...');
             this.debouncedPreviewUpdate();
         } else {
-            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep);
         }
     }
 
@@ -1258,11 +1260,11 @@ class PaintingEnhancer {
         log('✅ Settings updated. New value:', this.state.settings.contrastBoost);
         
         // Real-time preview for Step 3
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+        if (this.ui.currentStep === 3) {
             log('🔄 Triggering preview update...');
             this.debouncedPreviewUpdate();
         } else {
-            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep);
         }
     }
 
@@ -1272,11 +1274,47 @@ class PaintingEnhancer {
         log('✅ Settings updated. New value:', this.state.settings.saturationBoost);
         
         // Real-time preview for Step 3
-        if (this.ui.currentStep === 3 && this.state.step3PreviewMode) {
+        if (this.ui.currentStep === 3) {
             log('🔄 Triggering preview update...');
             this.debouncedPreviewUpdate();
         } else {
-            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep, 'previewMode:', this.state.step3PreviewMode);
+            log('⏸️ Preview update skipped - currentStep:', this.ui.currentStep);
+        }
+    }
+
+    updateLightingEnabled(enabled) {
+        log('🎯 updateLightingEnabled called with:', enabled);
+        this.state.settings.lightingEnabled = enabled;
+        log('✅ Settings updated. New value:', this.state.settings.lightingEnabled);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
+        }
+    }
+
+    updateContrastEnabled(enabled) {
+        log('🎯 updateContrastEnabled called with:', enabled);
+        this.state.settings.contrastEnabled = enabled;
+        log('✅ Settings updated. New value:', this.state.settings.contrastEnabled);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
+        }
+    }
+
+    updateSaturationEnabled(enabled) {
+        log('🎯 updateSaturationEnabled called with:', enabled);
+        this.state.settings.saturationEnabled = enabled;
+        log('✅ Settings updated. New value:', this.state.settings.saturationEnabled);
+        
+        // Real-time preview for Step 3
+        if (this.ui.currentStep === 3) {
+            log('🔄 Triggering preview update...');
+            this.debouncedPreviewUpdate();
         }
     }
 
@@ -1284,6 +1322,9 @@ class PaintingEnhancer {
         this.state.settings.lightingCorrectionStrength = 10;
         this.state.settings.contrastBoost = 1.10;
         this.state.settings.saturationBoost = 1.24;
+        this.state.settings.lightingEnabled = true;
+        this.state.settings.contrastEnabled = true;
+        this.state.settings.saturationEnabled = true;
         log('Lighting settings reset to defaults');
         
         // Update UI elements
