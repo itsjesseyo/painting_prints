@@ -32,46 +32,13 @@ class SuperResolution {
     }
 
     async init() {
-        log('Initializing Super Resolution...');
+        log('Initializing reliable canvas-based upscaler...');
         
-        try {
-            // Check if TensorFlow.js is available
-            if (typeof tf === 'undefined') {
-                log('TensorFlow.js not available, super resolution will be simulated');
-                this.isReady = false;
-                return false;
-            }
-
-            // Check if UpscalerJS is available
-            if (typeof Upscaler === 'undefined') {
-                log('UpscalerJS not available, super resolution will be simulated');
-                this.isReady = false;
-                return false;
-            }
-
-            // Log TensorFlow.js backend info
-            log('TensorFlow.js backend:', tf.getBackend());
-            log('TensorFlow.js version:', tf.version);
-
-            // Initialize with a default model (4x) for now
-            // We'll change models dynamically based on requirements
-            this.currentModel = 'esrgan-medium-x4';
-            this.upscaler = new Upscaler({
-                model: {
-                    path: this.models[this.currentModel].path,
-                    scale: this.models[this.currentModel].scale
-                }
-            });
-
-            this.isReady = true;
-            log('Super Resolution initialized successfully with model:', this.currentModel);
-            return true;
-            
-        } catch (error) {
-            logError('Failed to initialize Super Resolution:', error);
-            this.isReady = false;
-            return false;
-        }
+        // Always ready since we're using simple canvas-based resizing
+        // No WebGL models to load, no TensorFlow.js dependencies
+        this.isReady = true;
+        log('Canvas-based upscaler initialized successfully');
+        return true;
     }
 
     async switchModel(modelId) {
@@ -214,99 +181,11 @@ class SuperResolution {
     }
 
     async upscaleImage(inputCanvas, targetWidth, targetHeight, onProgress) {
-        log('Starting super resolution upscaling...');
+        log('Using reliable high-quality canvas-based upscaling');
         
-        try {
-            if (!this.isReady) {
-                return this.simulateUpscaling(inputCanvas, targetWidth, targetHeight, onProgress);
-            }
-
-            // Check WebGL dimension limits
-            const dimensionCheck = this.canHandleDimensions(targetWidth, targetHeight);
-            if (!dimensionCheck.canHandle) {
-                log('WebGL limits exceeded:', dimensionCheck.reason);
-                log('Falling back to high-quality resize');
-                return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
-            }
-
-            // Calculate scale factor needed
-            const scaleX = targetWidth / inputCanvas.width;
-            const scaleY = targetHeight / inputCanvas.height;
-            const scale = Math.max(scaleX, scaleY);
-            
-            log(`Upscaling from ${inputCanvas.width}x${inputCanvas.height} to ${targetWidth}x${targetHeight} (${scale.toFixed(2)}x)`);
-            
-            // Select optimal model for the required scale
-            const optimalModel = this.selectOptimalModel(scale);
-            if (optimalModel !== this.currentModel) {
-                log(`Switching to optimal model: ${optimalModel} for scale ${scale.toFixed(2)}x`);
-                await this.switchModel(optimalModel);
-            }
-            
-            // Progress callback wrapper with async yielding
-            const progressCallback = async (progress) => {
-                if (onProgress) {
-                    onProgress(Math.round(progress * 100));
-                    // Yield control to allow UI updates
-                    await new Promise(resolve => setTimeout(resolve, 1));
-                }
-            };
-            
-            // Add memory monitoring
-            const memoryBefore = tf.memory();
-            log('Memory before upscaling:', memoryBefore);
-            
-            // Perform upscaling with error handling
-            let upscaledCanvas;
-            try {
-                // Give UI a chance to update before intensive operation
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                upscaledCanvas = await this.upscaler.upscale(inputCanvas, {
-                    output: 'canvas',
-                    progressCallback: progressCallback
-                });
-            } catch (webglError) {
-                logError('WebGL upscaling failed:', webglError);
-                
-                // Comprehensive TensorFlow.js cleanup
-                await this.cleanupTensorFlowState();
-                
-                // Mark upscaler as not ready to force fallback on subsequent attempts
-                this.webglFailed = true;
-                
-                // Fallback to high-quality resize
-                return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
-            }
-            
-            // Monitor memory after upscaling
-            const memoryAfter = tf.memory();
-            log('Memory after upscaling:', memoryAfter);
-            
-            // If the upscaled result doesn't match exact target dimensions,
-            // resize to exact dimensions
-            if (upscaledCanvas.width !== targetWidth || upscaledCanvas.height !== targetHeight) {
-                const finalCanvas = document.createElement('canvas');
-                finalCanvas.width = targetWidth;
-                finalCanvas.height = targetHeight;
-                
-                const ctx = finalCanvas.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(upscaledCanvas, 0, 0, targetWidth, targetHeight);
-                
-                log('Upscaling completed with final resize');
-                return finalCanvas;
-            }
-            
-            log('Upscaling completed');
-            return upscaledCanvas;
-            
-        } catch (error) {
-            logError('Upscaling failed:', error);
-            // Fallback to simple resize
-            return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
-        }
+        // Always use the reliable canvas-based fallback method
+        // This eliminates WebGL issues and provides consistent results
+        return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
     }
 
     simulateUpscaling(inputCanvas, targetWidth, targetHeight, onProgress) {
