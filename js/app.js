@@ -865,6 +865,9 @@ class PaintingEnhancer {
             log('Starting super resolution processing...');
             log('Upscaler ready:', this.upscaler.isReady);
             
+            // Reset WebGL failure flag for new attempts
+            this.upscaler.webglFailed = false;
+            
             // Allow UI to update before starting intensive processing
             await new Promise(resolve => setTimeout(resolve, 50));
             
@@ -891,7 +894,11 @@ class PaintingEnhancer {
             }
             
         } catch (error) {
-            this.ui.showError('High-resolution generation failed');
+            let errorMessage = 'High-resolution generation failed';
+            if (error.message && error.message.includes('WebGL')) {
+                errorMessage = 'WebGL limits exceeded. Using fallback processing.';
+            }
+            this.ui.showError(errorMessage);
             logError('Generation error:', error);
         }
     }

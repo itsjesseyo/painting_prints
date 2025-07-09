@@ -2,6 +2,7 @@ class SuperResolution {
     constructor() {
         this.upscaler = null;
         this.isReady = false;
+        this.webglFailed = false;
         this.models = {
             'esrgan-medium-x2': {
                 name: 'ESRGAN Medium 2x',
@@ -268,15 +269,11 @@ class SuperResolution {
             } catch (webglError) {
                 logError('WebGL upscaling failed:', webglError);
                 
-                // Cleanup any allocated memory
-                if (tf && tf.disposeVariables) {
-                    tf.disposeVariables();
-                }
+                // Comprehensive TensorFlow.js cleanup
+                await this.cleanupTensorFlowState();
                 
-                // Force garbage collection if available
-                if (window.gc) {
-                    window.gc();
-                }
+                // Mark upscaler as not ready to force fallback on subsequent attempts
+                this.webglFailed = true;
                 
                 // Fallback to high-quality resize
                 return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
@@ -428,9 +425,57 @@ class SuperResolution {
         
         return currentCanvas;
     }
+    
+    // Comprehensive TensorFlow.js cleanup after WebGL failure
+    async cleanupTensorFlowState() {
+        try {
+            log('Performing comprehensive TensorFlow.js cleanup');
+            
+            // Dispose of all variables
+            if (tf && tf.disposeVariables) {
+                tf.disposeVariables();
+            }
+            
+            // Clear all tensors
+            if (tf && tf.dispose) {
+                tf.dispose();
+            }
+            
+            // Reset the backend
+            if (tf && tf.backend) {
+                try {
+                    tf.backend().dispose();
+                } catch (e) {
+                    log('Backend disposal failed:', e.message);
+                }
+            }
+            
+            // Force garbage collection if available
+            if (window.gc) {
+                window.gc();
+            }
+            
+            // Clear model cache
+            this.modelCache.clear();
+            
+            // Reset upscaler instance
+            this.upscaler = null;
+            
+            // Allow time for cleanup
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            log('TensorFlow.js cleanup completed');
+            
+        } catch (error) {
+            logError('TensorFlow.js cleanup failed:', error);
+        }
+    }
 
     async processForPrint(inputCanvas, targetSize, format, onProgress) {
         log('Processing image for print:', targetSize, format);
+        
+        // Reset WebGL failure flag for new attempts (user can try again)
+        // this.webglFailed = false;
         
         try {
             const inputWidth = inputCanvas.width;
