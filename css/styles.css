@@ -249,6 +249,30 @@ body {
     margin-bottom: 16px;
 }
 
+/* Inline control layout for compact display */
+.control-group.inline-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.control-label.inline-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.size-selector.inline-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    padding: 10px;
+}
+
 /* Step 3 specific layout - compact four-column layout */
 #controls-3 .control-group {
     margin-bottom: 12px;
@@ -448,7 +472,7 @@ input[type="checkbox"] {
 
 .generate-btn {
     width: 100%;
-    margin-top: 12px;
+    margin-top: 8px;
     background: #FF9500;
     color: white;
     font-weight: 600;

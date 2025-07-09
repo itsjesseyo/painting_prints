@@ -113,6 +113,22 @@
         margin-bottom: 20px;
     }
     
+    /* Mobile adjustments for inline controls */
+    .control-group.inline-control {
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .control-label.inline-label {
+        font-size: 12px;
+        min-width: 60px;
+    }
+    
+    .size-selector.inline-select {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
     .slider {
         height: 8px;
         margin: 12px 0;
