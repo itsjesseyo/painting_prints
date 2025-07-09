@@ -508,6 +508,7 @@ class PaintingEnhancer {
             
             // Apply auto color correction if enabled
             if (this.state.settings.autoColor) {
+                log('🎨 Applying auto color correction with intensity:', this.state.settings.colorIntensity);
                 const inputMat = this.processor.canvasToMat(previewCanvas);
                 if (inputMat) {
                     const correctedMat = this.processor.autoColorCorrect(
@@ -517,9 +518,16 @@ class PaintingEnhancer {
                     const outputCanvas = this.processor.matToCanvas(correctedMat);
                     if (outputCanvas) {
                         previewCanvas = outputCanvas;
+                        log('✅ Auto color correction applied successfully');
+                    } else {
+                        log('❌ Failed to convert corrected Mat to canvas');
                     }
                     cleanupMats(inputMat, correctedMat);
+                } else {
+                    log('❌ Failed to convert preview canvas to Mat');
                 }
+            } else {
+                log('⏭️ Auto color correction disabled');
             }
             
             // Display the preview
@@ -595,6 +603,7 @@ class PaintingEnhancer {
             }
             
             if (this.state.settings.autoColor) {
+                log('💾 Saving auto color correction with intensity:', this.state.settings.colorIntensity);
                 const inputMat = this.processor.canvasToMat(processedCanvas);
                 if (inputMat) {
                     const correctedMat = this.processor.autoColorCorrect(
@@ -604,9 +613,16 @@ class PaintingEnhancer {
                     const outputCanvas = this.processor.matToCanvas(correctedMat);
                     if (outputCanvas) {
                         processedCanvas = outputCanvas;
+                        log('✅ Auto color correction saved to currentCanvas');
+                    } else {
+                        log('❌ Failed to convert corrected Mat to canvas in save');
                     }
                     cleanupMats(inputMat, correctedMat);
+                } else {
+                    log('❌ Failed to convert processed canvas to Mat in save');
                 }
+            } else {
+                log('⏭️ Auto color correction disabled, not saving');
             }
             
             // Update the current canvas with the processed result
@@ -831,7 +847,11 @@ class PaintingEnhancer {
 
     updateAutoColorEnabled(enabled) {
         this.state.settings.autoColor = enabled;
-        log('Auto color correction:', enabled ? 'enabled' : 'disabled');
+        log('🔄 Auto color correction state updated:', enabled ? 'enabled' : 'disabled');
+        log('🔍 Current auto color settings:', {
+            autoColor: this.state.settings.autoColor,
+            colorIntensity: this.state.settings.colorIntensity
+        });
         // Trigger real-time preview update if on step 3
         if (this.currentStep === 3) {
             this.updateStep3Preview();
@@ -840,7 +860,11 @@ class PaintingEnhancer {
 
     updateColorIntensity(value) {
         this.state.settings.colorIntensity = value;
-        log('Color intensity updated:', value);
+        log('🎨 Color intensity updated:', value);
+        log('🔍 Current auto color settings:', {
+            autoColor: this.state.settings.autoColor,
+            colorIntensity: this.state.settings.colorIntensity
+        });
         // Trigger real-time preview update if on step 3
         if (this.currentStep === 3) {
             this.updateStep3Preview();

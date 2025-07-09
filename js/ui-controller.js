@@ -685,8 +685,22 @@ class UIController {
         // Initialize auto color slider state based on checkbox
         if (this.elements.autoColor && this.elements.colorIntensitySlider) {
             const isChecked = this.elements.autoColor.checked;
-            this.elements.colorIntensitySlider.disabled = !isChecked;
-            log('Auto color slider initialized, disabled:', !isChecked);
+            const appState = window.app?.state?.settings?.autoColor;
+            
+            log('🔍 Auto color state check:', {
+                checkboxChecked: isChecked,
+                appState: appState,
+                sliderValue: this.elements.colorIntensitySlider.value
+            });
+            
+            // Sync checkbox with app state
+            if (appState !== isChecked) {
+                this.elements.autoColor.checked = appState;
+                log('🔄 Synced checkbox with app state:', appState);
+            }
+            
+            this.elements.colorIntensitySlider.disabled = !this.elements.autoColor.checked;
+            log('🎨 Auto color slider initialized, disabled:', !this.elements.autoColor.checked);
         }
     }
 
