@@ -663,7 +663,10 @@ class PaintingEnhancer {
     updateColorIntensity(value) {
         this.state.settings.colorIntensity = value;
         log('Color intensity updated:', value);
-        this.debouncedPreviewUpdate();
+        // Trigger real-time preview update if on step 3
+        if (this.currentStep === 3) {
+            this.updateStep3Preview();
+        }
     }
 
     updatePrintSize(size) {

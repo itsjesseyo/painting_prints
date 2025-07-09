@@ -61,8 +61,6 @@ class UIController {
             colorIntensityValue: document.getElementById('color-intensity-value'),
             
             printSize: document.getElementById('print-size'),
-            fileInfo: document.getElementById('file-info'),
-            sizeWarning: document.getElementById('size-warning'),
             generateBtn: document.getElementById('generate-btn'),
             
             outputFormat: document.getElementById('output-format'),
@@ -623,24 +621,9 @@ class UIController {
     }
     
     updateFileInfo(size) {
-        const sizeMap = {
-            '8x10': { pixels: '2400×3000px', mb: 15 },
-            '11x14': { pixels: '3300×4200px', mb: 25 },
-            '16x20': { pixels: '4800×6000px', mb: 35 },
-            '18x24': { pixels: '5400×7200px', mb: 45 },
-            '24x30': { pixels: '7200×9000px', mb: 65 },
-            '30x40': { pixels: '9000×12000px', mb: 85 }
-        };
-        
-        const info = sizeMap[size];
-        if (info && this.elements.fileInfo) {
-            this.elements.fileInfo.innerHTML = `📊 Estimated size: ~${info.mb}MB JPEG`;
-        }
-        
-        // Show warning for large files
-        if (this.elements.sizeWarning) {
-            this.elements.sizeWarning.style.display = info && info.mb > 50 ? 'block' : 'none';
-        }
+        // File size info is now displayed in the select options
+        // No need to update separate elements
+        log('Print size selected:', size);
     }
 
     async handleGenerateHighRes() {
