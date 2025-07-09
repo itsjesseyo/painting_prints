@@ -242,10 +242,12 @@ class SuperResolution {
                 await this.switchModel(optimalModel);
             }
             
-            // Progress callback wrapper
-            const progressCallback = (progress) => {
+            // Progress callback wrapper with async yielding
+            const progressCallback = async (progress) => {
                 if (onProgress) {
                     onProgress(Math.round(progress * 100));
+                    // Yield control to allow UI updates
+                    await new Promise(resolve => setTimeout(resolve, 1));
                 }
             };
             
@@ -256,6 +258,9 @@ class SuperResolution {
             // Perform upscaling with error handling
             let upscaledCanvas;
             try {
+                // Give UI a chance to update before intensive operation
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 upscaledCanvas = await this.upscaler.upscale(inputCanvas, {
                     output: 'canvas',
                     progressCallback: progressCallback
@@ -330,10 +335,13 @@ class SuperResolution {
     }
 
     fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             log('Performing fallback high-quality resize');
             
             if (onProgress) onProgress(10);
+            
+            // Allow UI to update before intensive operation
+            await new Promise(r => setTimeout(r, 50));
             
             const canvas = document.createElement('canvas');
             canvas.width = targetWidth;
@@ -425,6 +433,9 @@ class SuperResolution {
             
             log(`Target dimensions: ${dimensions.width}x${dimensions.height}`);
             log(`Estimated file size: ${sizeEstimate.formatted}`);
+            
+            // Allow UI to update before starting intensive upscaling
+            await new Promise(resolve => setTimeout(resolve, 50));
             
             // Perform upscaling
             const upscaledCanvas = await this.upscaleImage(

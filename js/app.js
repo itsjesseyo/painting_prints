@@ -865,6 +865,9 @@ class PaintingEnhancer {
             log('Starting super resolution processing...');
             log('Upscaler ready:', this.upscaler.isReady);
             
+            // Allow UI to update before starting intensive processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
             const result = await this.upscaler.processForPrint(
                 this.state.currentCanvas,
                 this.state.settings.targetSize,

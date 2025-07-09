@@ -628,6 +628,9 @@ class UIController {
         this.showProgress('Generating high-resolution image...', 0);
         
         try {
+            // Allow UI to update before starting intensive processing
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Call the actual super resolution processing
             await window.app?.handleGenerateHighRes();
             
