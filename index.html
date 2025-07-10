@@ -84,39 +84,33 @@
             <div class="control-group">
                 <button class="btn btn-secondary" id="optimize-grid">✨ Optimize Spacing</button>
                 <button class="btn btn-secondary" id="reset-grid">Reset Grid</button>
+                <button class="btn btn-primary" id="apply-btn">Apply</button>
             </div>
         </div>
 
         <!-- Step 3: Color Correction Controls -->
         <div id="controls-3" class="controls-container">
             <div class="control-row">
-                <div class="control-fourth">
+                <div class="control-third">
                     <label class="control-label">
                         <input type="checkbox" id="lighting-enabled">
                         Lighting Correction: <span id="lighting-strength-value">10</span>%
                     </label>
                     <input type="range" class="slider" id="lighting-strength-slider" min="0" max="100" value="10">
                 </div>
-                <div class="control-fourth">
+                <div class="control-third">
                     <label class="control-label">
                         <input type="checkbox" id="contrast-enabled">
                         Contrast Boost: <span id="contrast-boost-value">1.10</span>x
                     </label>
                     <input type="range" class="slider" id="contrast-boost-slider" min="1.0" max="3.0" value="1.10" step="0.05">
                 </div>
-                <div class="control-fourth">
+                <div class="control-third">
                     <label class="control-label">
                         <input type="checkbox" id="saturation-enabled">
                         Saturation Boost: <span id="saturation-boost-value">1.24</span>x
                     </label>
                     <input type="range" class="slider" id="saturation-boost-slider" min="1.0" max="3.0" value="1.24" step="0.05">
-                </div>
-                <div class="control-fourth">
-                    <label class="control-label">
-                        <input type="checkbox" id="auto-color">
-                        Auto Color: <span id="color-intensity-value">75</span>%
-                    </label>
-                    <input type="range" class="slider" id="color-intensity-slider" min="0" max="100" value="75">
                 </div>
             </div>
             <div class="control-row">
@@ -161,7 +155,6 @@
     <!-- Navigation -->
     <footer id="navigation">
         <button class="btn btn-secondary" id="back-btn" style="display: none;">Back</button>
-        <button class="btn btn-primary" id="apply-btn" style="display: none;">Apply</button>
         <button class="btn btn-primary" id="next-btn" disabled>Next</button>
     </footer>
 

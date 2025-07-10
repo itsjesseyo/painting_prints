@@ -569,61 +569,6 @@ class ImageProcessor {
         }
     }
 
-    // Step 5: Auto Color Correction
-    autoColorCorrect(inputMat, intensity = 1.0) {
-        if (!this.isOpenCVReady) {
-            log('OpenCV not available, skipping color correction');
-            return inputMat.clone();
-        }
-
-        log('Applying auto color correction with intensity:', intensity);
-        
-        try {
-            let lab = new cv.Mat();
-            let channels = new cv.MatVector();
-            let outputMat = new cv.Mat();
-            
-            // Convert to LAB color space
-            cv.cvtColor(inputMat, lab, cv.COLOR_RGBA2Lab);
-            
-            // Split channels
-            cv.split(lab, channels);
-            
-            // Apply histogram equalization to L channel
-            let lChannel = channels.get(0);
-            let equalizedL = new cv.Mat();
-            cv.equalizeHist(lChannel, equalizedL);
-            
-            // Blend with original based on intensity
-            if (intensity < 1.0) {
-                cv.addWeighted(lChannel, 1 - intensity, equalizedL, intensity, 0, equalizedL);
-            }
-            
-            // Replace L channel
-            let newChannels = new cv.MatVector();
-            newChannels.push_back(equalizedL);
-            newChannels.push_back(channels.get(1));
-            newChannels.push_back(channels.get(2));
-            
-            // Merge channels
-            let enhancedLab = new cv.Mat();
-            cv.merge(newChannels, enhancedLab);
-            
-            // Convert back to RGBA
-            cv.cvtColor(enhancedLab, outputMat, cv.COLOR_Lab2RGBA);
-            
-            // Cleanup
-            cleanupMats(lab, equalizedL, enhancedLab);
-            channels.delete();
-            newChannels.delete();
-            
-            return outputMat;
-            
-        } catch (error) {
-            logError('Color correction failed:', error);
-            return inputMat.clone();
-        }
-    }
 
     // Utility Functions
     validateCanvasSize(width, height) {

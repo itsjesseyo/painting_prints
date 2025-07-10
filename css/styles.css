@@ -284,12 +284,12 @@ body {
     margin-bottom: 12px;
 }
 
-#controls-3 .control-fourth {
+#controls-3 .control-third {
     flex: 1;
     min-width: 0; /* Allow flex items to shrink below content size */
 }
 
-#controls-3 .control-fourth .control-label {
+#controls-3 .control-third .control-label {
     font-size: 11px;
     margin-bottom: 6px;
     display: flex;
@@ -297,18 +297,18 @@ body {
     gap: 4px;
 }
 
-#controls-3 .control-fourth .control-label input[type="checkbox"] {
+#controls-3 .control-third .control-label input[type="checkbox"] {
     width: 14px;
     height: 14px;
     margin: 0;
     flex-shrink: 0;
 }
 
-#controls-3 .control-fourth .slider {
+#controls-3 .control-third .slider {
     width: 100%;
 }
 
-#controls-3 .control-fourth .slider:disabled {
+#controls-3 .control-third .slider:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

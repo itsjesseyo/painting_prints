@@ -55,9 +55,6 @@ class UIController {
             saturationEnabled: document.getElementById('saturation-enabled'),
             resetLighting: document.getElementById('reset-lighting'),
             
-            autoColor: document.getElementById('auto-color'),
-            colorIntensitySlider: document.getElementById('color-intensity-slider'),
-            colorIntensityValue: document.getElementById('color-intensity-value'),
             
             printSize: document.getElementById('print-size'),
             generateBtn: document.getElementById('generate-btn'),
@@ -138,8 +135,6 @@ class UIController {
         this.elements.contrastEnabled?.addEventListener('change', this.handleContrastToggle.bind(this));
         this.elements.saturationBoostSlider?.addEventListener('input', this.handleSaturationBoostAdjustment.bind(this));
         this.elements.saturationEnabled?.addEventListener('change', this.handleSaturationToggle.bind(this));
-        this.elements.autoColor?.addEventListener('change', this.handleAutoColorToggle.bind(this));
-        this.elements.colorIntensitySlider?.addEventListener('input', this.handleColorIntensityAdjustment.bind(this));
         this.elements.resetLighting?.addEventListener('click', () => this.resetLightingSettings());
         
         // Debug: Log which Step 3 elements were found
@@ -250,8 +245,6 @@ class UIController {
                 if (stepNumber === 3) {
                     setTimeout(() => {
                         window.app.initializeStep3();
-                        // Initialize auto color slider state
-                        this.initializeAutoColorState();
                     }, 100);
                 }
                 
@@ -320,11 +313,6 @@ class UIController {
             this.elements.backBtn.style.display = this.currentStep > 1 ? 'block' : 'none';
         }
         
-        
-        // Apply button (show for step 2 and 4, but not 3 since it has real-time preview)
-        if (this.elements.applyBtn) {
-            this.elements.applyBtn.style.display = (this.currentStep === 2) ? 'block' : 'none';
-        }
         
         // Next button
         if (this.elements.nextBtn) {
@@ -529,14 +517,6 @@ class UIController {
         window.app?.updateSaturationEnabled(enabled);
     }
 
-    handleAutoColorToggle(e) {
-        const enabled = e.target.checked;
-        log('🔧 handleAutoColorToggle called with enabled:', enabled);
-        if (this.elements.colorIntensitySlider) {
-            this.elements.colorIntensitySlider.disabled = !enabled;
-        }
-        window.app?.updateAutoColorEnabled(enabled);
-    }
 
     resetLightingSettings() {
         // Reset sliders and values
@@ -553,11 +533,6 @@ class UIController {
             this.elements.saturationBoostValue.textContent = '1.24';
         }
         
-        // Reset color intensity slider and value
-        if (this.elements.colorIntensitySlider) {
-            this.elements.colorIntensitySlider.value = 75;
-            this.elements.colorIntensityValue.textContent = '75';
-        }
         
         // Reset checkboxes to disabled (false) and disable sliders
         if (this.elements.lightingEnabled) {
@@ -578,25 +553,11 @@ class UIController {
                 this.elements.saturationBoostSlider.disabled = true;
             }
         }
-        if (this.elements.autoColor) {
-            this.elements.autoColor.checked = false;
-            if (this.elements.colorIntensitySlider) {
-                this.elements.colorIntensitySlider.disabled = true;
-            }
-        }
         
         log('Lighting settings reset');
         window.app?.resetLightingSettings();
     }
 
-    handleColorIntensityAdjustment(e) {
-        const value = parseInt(e.target.value);
-        if (this.elements.colorIntensityValue) {
-            this.elements.colorIntensityValue.textContent = value;
-        }
-        log('Color intensity adjustment:', value);
-        window.app?.updateColorIntensity(value);
-    }
 
     // Step 6: Super Resolution Handlers
     handlePrintSizeChange(e) {
@@ -681,28 +642,6 @@ class UIController {
             `💾 JPEG High: ~${jpegHigh}MB | Standard: ~${jpegStd}MB | PNG: ~${pngSize}MB`;
     }
     
-    initializeAutoColorState() {
-        // Initialize auto color slider state based on checkbox
-        if (this.elements.autoColor && this.elements.colorIntensitySlider) {
-            const isChecked = this.elements.autoColor.checked;
-            const appState = window.app?.state?.settings?.autoColor;
-            
-            log('🔍 Auto color state check:', {
-                checkboxChecked: isChecked,
-                appState: appState,
-                sliderValue: this.elements.colorIntensitySlider.value
-            });
-            
-            // Sync checkbox with app state
-            if (appState !== isChecked) {
-                this.elements.autoColor.checked = appState;
-                log('🔄 Synced checkbox with app state:', appState);
-            }
-            
-            this.elements.colorIntensitySlider.disabled = !this.elements.autoColor.checked;
-            log('🎨 Auto color slider initialized, disabled:', !this.elements.autoColor.checked);
-        }
-    }
 
     // Before/After Toggle
     toggleBeforeAfter(step) {
