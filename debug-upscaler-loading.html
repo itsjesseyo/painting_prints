@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug UpscalerJS Loading</title>
+</head>
+<body>
+    <h1>UpscalerJS Loading Debug</h1>
+    <div id="status"></div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            document.getElementById('status').innerHTML += '<br>' + message;
+        }
+        
+        log('Starting script load test...');
+        
+        // Test 1: Load TensorFlow.js
+        const tfScript = document.createElement('script');
+        tfScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js';
+        tfScript.onload = () => {
+            log('✅ TensorFlow.js loaded: ' + (typeof tf !== 'undefined' ? tf.version : 'undefined'));
+            
+            // Test 2: Load UpscalerJS
+            const upscalerScript = document.createElement('script');
+            upscalerScript.src = 'https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js';
+            upscalerScript.onload = () => {
+                log('✅ UpscalerJS script loaded');
+                setTimeout(() => {
+                    log('Checking for Upscaler constructor: ' + (typeof Upscaler !== 'undefined' ? 'FOUND' : 'NOT FOUND'));
+                    if (typeof Upscaler !== 'undefined') {
+                        try {
+                            const upscaler = new Upscaler();
+                            log('✅ UpscalerJS instance created successfully');
+                        } catch (error) {
+                            log('❌ Failed to create UpscalerJS instance: ' + error.message);
+                        }
+                    }
+                }, 1000);
+            };
+            upscalerScript.onerror = () => {
+                log('❌ Failed to load UpscalerJS script');
+            };
+            document.head.appendChild(upscalerScript);
+        };
+        tfScript.onerror = () => {
+            log('❌ Failed to load TensorFlow.js');
+        };
+        document.head.appendChild(tfScript);
+    </script>
+</body>
+</html>

@@ -2,88 +2,160 @@ class SuperResolution {
     constructor() {
         this.upscaler = null;
         this.isReady = false;
-        this.webglFailed = false;
-        this.models = {
-            'esrgan-medium-x2': {
-                name: 'ESRGAN Medium 2x',
-                scale: 2,
-                quality: 'balanced',
-                path: 'models/esrgan-medium/x2/model.json'
-            },
-            'esrgan-medium-x3': {
-                name: 'ESRGAN Medium 3x',
-                scale: 3,
-                quality: 'balanced',
-                path: 'models/esrgan-medium/x3/model.json'
-            },
-            'esrgan-medium-x4': {
-                name: 'ESRGAN Medium 4x',
-                scale: 4,
-                quality: 'balanced',
-                path: 'models/esrgan-medium/x4/model.json'
-            },
-            'esrgan-medium-x8': {
-                name: 'ESRGAN Medium 8x',
-                scale: 8,
-                quality: 'high',
-                path: 'models/esrgan-medium/x8/model.json'
-            }
-        };
     }
 
     async init() {
-        log('Initializing reliable canvas-based upscaler...');
+        log('Initializing UpscalerJS...');
         
-        // Always ready since we're using simple canvas-based resizing
-        // No WebGL models to load, no TensorFlow.js dependencies
-        this.isReady = true;
-        log('Canvas-based upscaler initialized successfully');
-        return true;
-    }
-
-    async switchModel(modelId) {
-        log('Switching to model:', modelId);
-        
-        if (!this.models[modelId]) {
-            logError('Model not found:', modelId);
-            return false;
-        }
-
         try {
-            this.currentModel = modelId;
-            this.upscaler = new Upscaler({
-                model: {
-                    path: this.models[modelId].path,
-                    scale: this.models[modelId].scale
-                }
-            });
-
-            log('Successfully switched to model:', modelId);
-            return true;
+            // Wait a bit for UpscalerJS to fully load
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (typeof Upscaler === 'undefined' && attempts < maxAttempts) {
+                log(`Waiting for UpscalerJS... (attempt ${attempts + 1}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
+            
+            // Check if UpscalerJS is available
+            if (typeof Upscaler === 'undefined') {
+                log('UpscalerJS not available after waiting');
+                this.isReady = false;
+                return false;
+            }
+            
+            // Check if we have all ESRGAN Thick models loaded
+            const models = {
+                '2x': typeof ESRGANThick2x !== 'undefined',
+                '3x': typeof ESRGANThick3x !== 'undefined',
+                '4x': typeof ESRGANThick4x !== 'undefined'
+            };
+            
+            const availableModels = Object.keys(models).filter(key => models[key]);
+            
+            if (availableModels.length === 0) {
+                log('No ESRGAN Thick models found');
+                this.isReady = false;
+                return false;
+            }
+            
+            log(`ESRGAN Thick models loaded: ${availableModels.join(', ')}`);
+            
+            // We need at least one model to be functional
+            if (availableModels.length > 0) {
+                this.isReady = true;
+                return true;
+            } else {
+                this.isReady = false;
+                return false;
+            }
             
         } catch (error) {
-            logError('Failed to switch model:', error);
+            logError('UpscalerJS initialization failed:', error);
+            this.isReady = false;
             return false;
         }
     }
 
-    selectOptimalModel(requiredScale) {
-        // Find the best model for the required scale
-        const availableScales = Object.keys(this.models)
-            .map(key => ({ key, scale: this.models[key].scale }))
-            .sort((a, b) => a.scale - b.scale);
-
-        // Find the smallest scale that can handle the requirement
-        let bestModel = availableScales[availableScales.length - 1]; // Default to largest
+    calculateOptimalPasses(inputWidth, inputHeight, targetWidth, targetHeight) {
+        // Calculate the scaling factor needed
+        const scaleNeeded = Math.max(
+            targetWidth / inputWidth,
+            targetHeight / inputHeight
+        );
         
-        for (const model of availableScales) {
-            if (model.scale >= requiredScale) {
-                bestModel = model;
-                break;
+        log(`Scale needed: ${scaleNeeded.toFixed(2)}x from ${inputWidth}x${inputHeight} to ${targetWidth}x${targetHeight}`);
+        
+        // If we already exceed the target, no scaling needed
+        if (scaleNeeded <= 1.0) {
+            return { passes: [], totalScale: 1.0 };
+        }
+        
+        // Available scaling factors
+        const availableScales = [];
+        if (typeof ESRGANThick2x !== 'undefined') availableScales.push(2);
+        if (typeof ESRGANThick3x !== 'undefined') availableScales.push(3);
+        if (typeof ESRGANThick4x !== 'undefined') availableScales.push(4);
+        
+        if (availableScales.length === 0) {
+            throw new Error('No ESRGAN models available');
+        }
+        
+        // Generate all possible combinations up to 3 passes
+        const combinations = [];
+        
+        // Single pass
+        for (let scale of availableScales) {
+            if (scale >= scaleNeeded) {
+                combinations.push({ passes: [scale], totalScale: scale });
             }
         }
+        
+        // Two passes
+        for (let scale1 of availableScales) {
+            for (let scale2 of availableScales) {
+                const totalScale = scale1 * scale2;
+                if (totalScale >= scaleNeeded) {
+                    combinations.push({ passes: [scale1, scale2], totalScale });
+                }
+            }
+        }
+        
+        // Three passes (only if needed)
+        if (combinations.length === 0) {
+            for (let scale1 of availableScales) {
+                for (let scale2 of availableScales) {
+                    for (let scale3 of availableScales) {
+                        const totalScale = scale1 * scale2 * scale3;
+                        if (totalScale >= scaleNeeded) {
+                            combinations.push({ passes: [scale1, scale2, scale3], totalScale });
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (combinations.length === 0) {
+            throw new Error('Cannot reach target size with available models');
+        }
+        
+        // Sort by:
+        // 1. Fewest passes (efficiency)
+        // 2. Smallest overshoot (quality)
+        // 3. Largest individual scales first (quality)
+        combinations.sort((a, b) => {
+            // Prefer fewer passes
+            if (a.passes.length !== b.passes.length) {
+                return a.passes.length - b.passes.length;
+            }
+            
+            // Prefer smaller overshoot
+            const overshootA = a.totalScale / scaleNeeded;
+            const overshootB = b.totalScale / scaleNeeded;
+            if (Math.abs(overshootA - overshootB) > 0.1) {
+                return overshootA - overshootB;
+            }
+            
+            // Prefer larger scales first (better quality)
+            const maxScaleA = Math.max(...a.passes);
+            const maxScaleB = Math.max(...b.passes);
+            return maxScaleB - maxScaleA;
+        });
+        
+        const optimal = combinations[0];
+        log(`Optimal scaling plan: ${optimal.passes.join(' → ')} = ${optimal.totalScale.toFixed(2)}x (${((optimal.totalScale / scaleNeeded - 1) * 100).toFixed(1)}% overshoot)`);
+        
+        return optimal;
+    }
 
-        return bestModel.key;
+    getModelForScale(scale) {
+        switch(scale) {
+            case 2: return ESRGANThick2x;
+            case 3: return ESRGANThick3x;
+            case 4: return ESRGANThick4x;
+            default: throw new Error(`No model available for ${scale}x scaling`);
+        }
     }
 
     calculateOptimalDimensions(inputWidth, inputHeight, targetSize) {
@@ -181,193 +253,122 @@ class SuperResolution {
     }
 
     async upscaleImage(inputCanvas, targetWidth, targetHeight, onProgress) {
-        log('Using reliable high-quality canvas-based upscaling');
+        log('Starting multi-pass AI upscaling with UpscalerJS');
         
-        // Always use the reliable canvas-based fallback method
-        // This eliminates WebGL issues and provides consistent results
-        return await this.fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress);
-    }
-
-    simulateUpscaling(inputCanvas, targetWidth, targetHeight, onProgress) {
-        return new Promise((resolve) => {
-            log('Simulating super resolution upscaling...');
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 20;
-                if (onProgress) {
-                    onProgress(progress);
-                }
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    
-                    // Perform high-quality resize as fallback
-                    this.fallbackResize(inputCanvas, targetWidth, targetHeight).then(result => {
-                        resolve(result);
-                    });
-                }
-            }, 300);
-        });
-    }
-
-    async fallbackResize(inputCanvas, targetWidth, targetHeight, onProgress) {
-        log('Performing high-quality resize using advanced interpolation');
-        
-        if (onProgress) onProgress(10);
-        
-        // Allow UI to update before intensive operation
-        await new Promise(r => setTimeout(r, 50));
-        
-        const scaleX = targetWidth / inputCanvas.width;
-        const scaleY = targetHeight / inputCanvas.height;
-        const maxScale = Math.max(scaleX, scaleY);
-        
-        if (onProgress) onProgress(30);
-        
-        // For large scale factors, use multi-step upscaling for better quality
-        if (maxScale > 2) {
-            if (onProgress) onProgress(50);
-            const result = await this.multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress);
-            if (onProgress) onProgress(100);
-            return result;
-        } else {
-            // Single step resize with enhanced quality settings
-            if (onProgress) onProgress(70);
-            
-            const result = await this.highQualitySingleResize(inputCanvas, targetWidth, targetHeight);
-            if (onProgress) onProgress(100);
-            return result;
-        }
-    }
-    
-    async highQualitySingleResize(inputCanvas, targetWidth, targetHeight) {
-        // Allow UI to update before drawing
-        await new Promise(r => setTimeout(r, 10));
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Use the highest quality settings available
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
-        // For better quality, use 2D transform with high-quality scaling
-        ctx.save();
-        ctx.scale(targetWidth / inputCanvas.width, targetHeight / inputCanvas.height);
-        ctx.drawImage(inputCanvas, 0, 0);
-        ctx.restore();
-        
-        return canvas;
-    }
-
-    async multiStepResizeAsync(inputCanvas, targetWidth, targetHeight, onProgress) {
-        let currentCanvas = inputCanvas;
-        let currentWidth = inputCanvas.width;
-        let currentHeight = inputCanvas.height;
-        
-        let step = 0;
-        const totalSteps = Math.ceil(Math.log2(Math.max(targetWidth / currentWidth, targetHeight / currentHeight)));
-        
-        log(`Multi-step resize: ${totalSteps} steps from ${currentWidth}x${currentHeight} to ${targetWidth}x${targetHeight}`);
-        
-        // Calculate intermediate steps - use smaller increments for better quality
-        while (currentWidth < targetWidth || currentHeight < targetHeight) {
-            // Use 1.5x increments for better quality than 2x
-            const nextWidth = Math.min(Math.round(currentWidth * 1.5), targetWidth);
-            const nextHeight = Math.min(Math.round(currentHeight * 1.5), targetHeight);
-            
-            // Allow UI to update between steps
-            await new Promise(r => setTimeout(r, 10));
-            
-            const stepCanvas = document.createElement('canvas');
-            stepCanvas.width = nextWidth;
-            stepCanvas.height = nextHeight;
-            
-            const ctx = stepCanvas.getContext('2d');
-            
-            // Use highest quality settings
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            
-            // Use transform scaling for better quality
-            ctx.save();
-            ctx.scale(nextWidth / currentWidth, nextHeight / currentHeight);
-            ctx.drawImage(currentCanvas, 0, 0);
-            ctx.restore();
-            
-            // Clean up intermediate canvas (except original)
-            if (currentCanvas !== inputCanvas) {
-                currentCanvas = null;
-            }
-            
-            currentCanvas = stepCanvas;
-            currentWidth = nextWidth;
-            currentHeight = nextHeight;
-            
-            // Update progress
-            step++;
-            if (onProgress) {
-                const progress = 50 + Math.round((step / totalSteps) * 40); // 50-90%
-                onProgress(progress);
-            }
-            
-            if (nextWidth === targetWidth && nextHeight === targetHeight) {
-                break;
-            }
+        if (!this.isReady || typeof Upscaler === 'undefined') {
+            throw new Error('UpscalerJS not available or not properly initialized');
         }
         
-        log(`Multi-step resize completed: ${step} steps`);
-        return currentCanvas;
-    }
-    
-    // Comprehensive TensorFlow.js cleanup after WebGL failure
-    async cleanupTensorFlowState() {
         try {
-            log('Performing comprehensive TensorFlow.js cleanup');
+            // Calculate optimal scaling passes
+            const scalingPlan = this.calculateOptimalPasses(
+                inputCanvas.width, 
+                inputCanvas.height, 
+                targetWidth, 
+                targetHeight
+            );
             
-            // Dispose of all variables
-            if (tf && tf.disposeVariables) {
-                tf.disposeVariables();
+            // If no scaling needed, return original
+            if (scalingPlan.passes.length === 0) {
+                if (onProgress) onProgress(100);
+                return inputCanvas;
             }
             
-            // Clear all tensors
-            if (tf && tf.dispose) {
-                tf.dispose();
+            let currentCanvas = inputCanvas;
+            const totalPasses = scalingPlan.passes.length;
+            
+            // Execute each pass
+            for (let i = 0; i < totalPasses; i++) {
+                const scale = scalingPlan.passes[i];
+                const passNumber = i + 1;
+                
+                log(`Pass ${passNumber}/${totalPasses}: Applying ${scale}x scaling`);
+                
+                // Calculate progress range for this pass
+                const passStartProgress = (i / totalPasses) * 90; // 0-90% for all passes
+                const passEndProgress = ((i + 1) / totalPasses) * 90;
+                
+                // Constrain input size for this pass
+                const constrainedCanvas = this.constrainInputSize(currentCanvas);
+                
+                // Create upscaler instance for this scale
+                const model = this.getModelForScale(scale);
+                const upscaler = new Upscaler({ model });
+                
+                // Convert canvas to image element for UpscalerJS
+                const img = new Image();
+                img.src = constrainedCanvas.toDataURL();
+                
+                await new Promise(resolve => {
+                    img.onload = resolve;
+                });
+                
+                // Progress callback for this pass
+                const passProgressCallback = (percent, slice, row, col) => {
+                    if (onProgress) {
+                        const mappedProgress = passStartProgress + (percent * (passEndProgress - passStartProgress));
+                        onProgress(mappedProgress);
+                    }
+                };
+                
+                // Upscale with UpscalerJS
+                const result = await upscaler.upscale(img, {
+                    patch: true,
+                    patchSize: 128,
+                    padding: 2,
+                    output: 'tensor',
+                    progress: passProgressCallback
+                });
+                
+                // Convert tensor result to canvas
+                const outputCanvas = document.createElement('canvas');
+                outputCanvas.width = result.shape[1]; // width
+                outputCanvas.height = result.shape[0]; // height
+                await tf.browser.toPixels(result.toInt(), outputCanvas);
+                result.dispose();
+                
+                // Update current canvas for next pass
+                currentCanvas = outputCanvas;
+                
+                log(`Pass ${passNumber} completed: ${currentCanvas.width}x${currentCanvas.height}`);
             }
             
-            // Reset the backend
-            if (tf && tf.backend) {
-                try {
-                    tf.backend().dispose();
-                } catch (e) {
-                    log('Backend disposal failed:', e.message);
-                }
-            }
-            
-            // Force garbage collection if available
-            if (window.gc) {
-                window.gc();
-            }
-            
-            // Clear model cache
-            this.modelCache.clear();
-            
-            // Reset upscaler instance
-            this.upscaler = null;
-            
-            // Allow time for cleanup
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            log('TensorFlow.js cleanup completed');
+            if (onProgress) onProgress(100);
+            log(`Multi-pass AI upscaling completed: Final size ${currentCanvas.width}x${currentCanvas.height}`);
+            return currentCanvas;
             
         } catch (error) {
-            logError('TensorFlow.js cleanup failed:', error);
+            logError('Multi-pass AI upscaling failed:', error);
+            throw error;
         }
     }
+
+    
+    constrainInputSize(inputCanvas) {
+        // Limit input size to avoid WebGL issues (4x upscaling means 16x area growth)
+        const maxInputSize = 4000; // This will result in ~16kx16k output (4x scale), which is near WebGL max
+        let { width, height } = inputCanvas;
+        
+        // Scale down if too large
+        const maxDimension = Math.max(width, height);
+        if (maxDimension > maxInputSize) {
+            const scale = maxInputSize / maxDimension;
+            width = Math.floor(width * scale);
+            height = Math.floor(height * scale);
+            log(`Input image resized from ${inputCanvas.width}x${inputCanvas.height} to ${width}x${height} for processing`);
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(inputCanvas, 0, 0, width, height);
+            return canvas;
+        }
+        
+        return inputCanvas; // No constraint needed
+    }
+
 
     async processForPrint(inputCanvas, targetSize, format, onProgress) {
         log('Processing image for print:', targetSize, format);
@@ -517,42 +518,9 @@ class SuperResolution {
 
     cleanup() {
         if (this.upscaler) {
-            try {
-                // Cleanup upscaler resources if method exists
-                if (typeof this.upscaler.dispose === 'function') {
-                    this.upscaler.dispose();
-                }
-            } catch (error) {
-                logError('Error cleaning up upscaler:', error);
-            }
             this.upscaler = null;
         }
-
-        // TensorFlow.js memory cleanup
-        this.cleanupMemory();
-        
         this.isReady = false;
         log('SuperResolution cleaned up');
-    }
-
-    cleanupMemory() {
-        try {
-            if (typeof tf !== 'undefined') {
-                // Dispose variables and clean up GPU memory
-                tf.disposeVariables();
-                
-                // Log memory status
-                const memory = tf.memory();
-                log('Memory after cleanup:', memory);
-                
-                // Force garbage collection if available (Chrome with --expose-gc flag)
-                if (window.gc) {
-                    window.gc();
-                    log('Forced garbage collection');
-                }
-            }
-        } catch (error) {
-            logError('Error during memory cleanup:', error);
-        }
     }
 }

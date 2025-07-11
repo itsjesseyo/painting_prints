@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple UpscalerJS Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        button { padding: 10px 15px; margin: 5px; }
+        .status { padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Simple UpscalerJS Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="status" class="status">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Upload Test Image</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="testUpscale()">Test AI Upscale</button>
+        <div id="progress" style="margin: 10px 0;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Results</h2>
+        <div>
+            <h3>Original:</h3>
+            <canvas id="originalCanvas"></canvas>
+        </div>
+        <div>
+            <h3>Upscaled:</h3>
+            <canvas id="upscaledCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Load Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-medium@latest/dist/umd/4x.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+    
+    <script>
+        let upscaler = null;
+        
+        // Log function
+        function log(message) {
+            console.log(message);
+            const status = document.getElementById('status');
+            status.innerHTML += '<br>' + message;
+        }
+        
+        // Initialize
+        async function init() {
+            log('Testing UpscalerJS integration...');
+            
+            // Wait a bit for all scripts to load
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check TensorFlow.js
+            if (typeof tf !== 'undefined') {
+                log('✅ TensorFlow.js loaded: ' + tf.version);
+            } else {
+                log('❌ TensorFlow.js not loaded');
+                return;
+            }
+            
+            // Check UpscalerJS
+            if (typeof Upscaler !== 'undefined') {
+                log('✅ UpscalerJS loaded');
+                
+                // Check for model (4x ESRGAN Medium)
+                if (typeof ESRGANMedium4x !== 'undefined') {
+                    log('✅ ESRGAN Medium 4x model loaded');
+                    try {
+                        // Create UpscalerJS instance with explicit model and very conservative settings
+                        upscaler = new Upscaler({
+                            model: ESRGANMedium4x,
+                            patchSize: 32,
+                            padding: 1
+                        });
+                        log('✅ UpscalerJS instance created with ESRGAN Medium 4x model');
+                    } catch (error) {
+                        log('❌ Failed to create UpscalerJS instance: ' + error.message);
+                        console.error(error);
+                    }
+                } else {
+                    log('❌ ESRGAN Medium 4x model not loaded, trying without model');
+                    try {
+                        upscaler = new Upscaler({
+                            patchSize: 32,
+                            padding: 1
+                        });
+                        log('✅ UpscalerJS instance created without explicit model');
+                    } catch (error) {
+                        log('❌ Failed to create UpscalerJS instance: ' + error.message);
+                        console.error(error);
+                    }
+                }
+            } else {
+                log('❌ UpscalerJS not loaded');
+                // Try to wait a bit more and check again
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                if (typeof Upscaler !== 'undefined') {
+                    log('✅ UpscalerJS loaded after delay');
+                    try {
+                        if (typeof ESRGANMedium4x !== 'undefined') {
+                            upscaler = new Upscaler({
+                                model: ESRGANMedium4x,
+                                patchSize: 32,
+                                padding: 1
+                            });
+                            log('✅ UpscalerJS instance created with model after delay');
+                        } else {
+                            upscaler = new Upscaler({
+                                patchSize: 32,
+                                padding: 1
+                            });
+                            log('✅ UpscalerJS instance created without model after delay');
+                        }
+                    } catch (error) {
+                        log('❌ Failed to create UpscalerJS instance: ' + error.message);
+                        console.error(error);
+                    }
+                } else {
+                    log('❌ UpscalerJS still not loaded after delay');
+                }
+            }
+        }
+        
+        // File to canvas with size constraint
+        function fileToCanvas(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Limit input size to avoid WebGL issues (4x upscaling means 16x area growth)
+                    const maxInputSize = 128; // This will result in ~512x512 output (4x scale)
+                    let { width, height } = img;
+                    
+                    // Scale down if too large
+                    const maxDimension = Math.max(width, height);
+                    if (maxDimension > maxInputSize) {
+                        const scale = maxInputSize / maxDimension;
+                        width = Math.floor(width * scale);
+                        height = Math.floor(height * scale);
+                        log(`📏 Input image resized from ${img.width}x${img.height} to ${width}x${height} for processing`);
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas);
+                };
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+        
+        // Test upscaling
+        async function testUpscale() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('❌ Please select an image file');
+                return;
+            }
+            
+            if (!upscaler) {
+                log('❌ UpscalerJS not ready');
+                return;
+            }
+            
+            try {
+                log('📥 Loading image...');
+                const originalCanvas = await fileToCanvas(file);
+                
+                // Display original
+                const originalDisplay = document.getElementById('originalCanvas');
+                originalDisplay.width = originalCanvas.width;
+                originalDisplay.height = originalCanvas.height;
+                originalDisplay.getContext('2d').drawImage(originalCanvas, 0, 0);
+                
+                log(`📏 Original size: ${originalCanvas.width}x${originalCanvas.height}`);
+                
+                // Double-check the canvas size before upscaling
+                if (originalCanvas.width > 128 || originalCanvas.height > 128) {
+                    log(`⚠️ Canvas is still too large: ${originalCanvas.width}x${originalCanvas.height}. This might cause WebGL errors.`);
+                }
+                
+                // Create image element for UpscalerJS
+                log('🚀 Starting AI upscale...');
+                const img = new Image();
+                img.src = originalCanvas.toDataURL();
+                
+                await new Promise(resolve => {
+                    img.onload = resolve;
+                });
+                
+                // Upscale with UpscalerJS with progress callback
+                const result = await upscaler.upscale(img, {
+                    progressCallback: (progress) => {
+                        const percent = Math.round(progress * 100);
+                        log(`🔄 Upscaling progress: ${percent}%`);
+                    }
+                });
+                log('✅ UpscalerJS completed');
+                
+                // Convert result to canvas
+                let upscaledCanvas;
+                if (typeof result === 'string') {
+                    // Data URL result
+                    const upscaledImg = new Image();
+                    upscaledImg.src = result;
+                    await new Promise(resolve => {
+                        upscaledImg.onload = resolve;
+                    });
+                    
+                    upscaledCanvas = document.createElement('canvas');
+                    upscaledCanvas.width = upscaledImg.width;
+                    upscaledCanvas.height = upscaledImg.height;
+                    upscaledCanvas.getContext('2d').drawImage(upscaledImg, 0, 0);
+                } else if (result instanceof HTMLCanvasElement) {
+                    upscaledCanvas = result;
+                } else if (result instanceof HTMLImageElement) {
+                    upscaledCanvas = document.createElement('canvas');
+                    upscaledCanvas.width = result.width;
+                    upscaledCanvas.height = result.height;
+                    upscaledCanvas.getContext('2d').drawImage(result, 0, 0);
+                }
+                
+                // Display upscaled
+                const upscaledDisplay = document.getElementById('upscaledCanvas');
+                upscaledDisplay.width = upscaledCanvas.width;
+                upscaledDisplay.height = upscaledCanvas.height;
+                upscaledDisplay.getContext('2d').drawImage(upscaledCanvas, 0, 0);
+                
+                log(`📏 Upscaled size: ${upscaledCanvas.width}x${upscaledCanvas.height}`);
+                log('✅ Test completed successfully!');
+                
+            } catch (error) {
+                log('❌ Test failed: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

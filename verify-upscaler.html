@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UpscalerJS Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .pass { background: #d4edda; }
+        .fail { background: #f8d7da; }
+        .loading { background: #fff3cd; }
+        canvas { border: 1px solid #000; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>UpscalerJS Integration Verification</h1>
+    
+    <div id="tf-test" class="test loading">
+        <h3>TensorFlow.js Test</h3>
+        <div id="tf-result">Testing...</div>
+    </div>
+    
+    <div id="upscaler-test" class="test loading">
+        <h3>UpscalerJS Test</h3>
+        <div id="upscaler-result">Testing...</div>
+    </div>
+    
+    <div id="model-test" class="test loading">
+        <h3>Default Model Test</h3>
+        <div id="model-result">Testing...</div>
+    </div>
+    
+    <div id="integration-test" class="test loading">
+        <h3>Integration Test</h3>
+        <div id="integration-result">Testing...</div>
+        <canvas id="test-canvas" width="100" height="100"></canvas>
+        <canvas id="result-canvas"></canvas>
+    </div>
+    
+    <!-- Include our UpscalerJS setup -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@latest/dist/umd/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        async function runTests() {
+            // Test 1: TensorFlow.js
+            try {
+                if (typeof tf !== 'undefined') {
+                    const backend = tf.getBackend();
+                    const version = tf.version;
+                    document.getElementById('tf-result').innerHTML = 
+                        `✅ TensorFlow.js loaded<br>Version: ${version}<br>Backend: ${backend}`;
+                    document.getElementById('tf-test').className = 'test pass';
+                } else {
+                    throw new Error('TensorFlow.js not found');
+                }
+            } catch (error) {
+                document.getElementById('tf-result').innerHTML = `❌ ${error.message}`;
+                document.getElementById('tf-test').className = 'test fail';
+            }
+            
+            // Test 2: UpscalerJS
+            try {
+                if (typeof Upscaler !== 'undefined') {
+                    document.getElementById('upscaler-result').innerHTML = '✅ UpscalerJS library loaded';
+                    document.getElementById('upscaler-test').className = 'test pass';
+                } else {
+                    throw new Error('UpscalerJS not found');
+                }
+            } catch (error) {
+                document.getElementById('upscaler-result').innerHTML = `❌ ${error.message}`;
+                document.getElementById('upscaler-test').className = 'test fail';
+            }
+            
+            // Test 3: Default Model
+            try {
+                if (typeof DefaultUpscalerJSModel !== 'undefined') {
+                    document.getElementById('model-result').innerHTML = '✅ Default UpscalerJS model loaded';
+                    document.getElementById('model-test').className = 'test pass';
+                } else {
+                    throw new Error('DefaultUpscalerJSModel not found');
+                }
+            } catch (error) {
+                document.getElementById('model-result').innerHTML = `❌ ${error.message}`;
+                document.getElementById('model-test').className = 'test fail';
+            }
+            
+            // Test 4: Integration
+            try {
+                document.getElementById('integration-result').innerHTML = '🔄 Creating test image...';
+                console.log('Starting integration test...');
+                
+                // Create a simple test image
+                const canvas = document.getElementById('test-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Draw a simple pattern
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(0, 0, 50, 50);
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(50, 0, 50, 50);
+                ctx.fillStyle = '#0000ff';
+                ctx.fillRect(0, 50, 50, 50);
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(50, 50, 50, 50);
+                
+                console.log('Test image created:', canvas.width, 'x', canvas.height);
+                
+                document.getElementById('integration-result').innerHTML = '🔄 Initializing UpscalerJS...';
+                console.log('Initializing UpscalerJS with model:', typeof DefaultUpscalerJSModel);
+                
+                // Initialize UpscalerJS with more detailed logging
+                const upscaler = new Upscaler({
+                    model: DefaultUpscalerJSModel,
+                    patchSize: 64,
+                    padding: 2
+                });
+                
+                console.log('UpscalerJS initialized:', upscaler);
+                document.getElementById('integration-result').innerHTML = '🔄 Upscaling test image...';
+                
+                // Upscale the test image with progress
+                console.log('Starting upscale operation...');
+                const result = await upscaler.upscale(canvas, {
+                    progressCallback: (progress) => {
+                        console.log('Upscale progress:', Math.round(progress * 100) + '%');
+                        document.getElementById('integration-result').innerHTML = 
+                            `🔄 Upscaling: ${Math.round(progress * 100)}%`;
+                    }
+                });
+                
+                console.log('Upscale completed. Result type:', typeof result);
+                console.log('Result constructor:', result.constructor.name);
+                console.log('Result properties:', Object.keys(result));
+                console.log('Result dimensions:', result.width, 'x', result.height);
+                
+                // Display result - handle different return types
+                const resultCanvas = document.getElementById('result-canvas');
+                const resultCtx = resultCanvas.getContext('2d');
+                
+                if (result instanceof HTMLCanvasElement) {
+                    // If it's already a canvas, just copy it
+                    resultCanvas.width = result.width;
+                    resultCanvas.height = result.height;
+                    resultCtx.drawImage(result, 0, 0);
+                } else if (result instanceof ImageData) {
+                    // If it's ImageData, put it directly
+                    resultCanvas.width = result.width;
+                    resultCanvas.height = result.height;
+                    resultCtx.putImageData(result, 0, 0);
+                } else if (typeof result === 'string') {
+                    // If it's a string (data URL or base64), load as image
+                    console.log(`String result detected. Length: ${result.length}`);
+                    console.log(`String starts with: ${result.substring(0, 50)}...`);
+                    
+                    const img = new Image();
+                    img.onload = function() {
+                        resultCanvas.width = img.width;
+                        resultCanvas.height = img.height;
+                        resultCtx.drawImage(img, 0, 0);
+                        
+                        const scale = img.width / canvas.width;
+                        document.getElementById('integration-result').innerHTML = 
+                            `✅ UpscalerJS working!<br>Original: ${canvas.width}x${canvas.height}<br>Result: ${img.width}x${img.height}<br>Scale: ${scale.toFixed(2)}x`;
+                        document.getElementById('integration-test').className = 'test pass';
+                    };
+                    img.onerror = function() {
+                        throw new Error('Failed to load string result as image');
+                    };
+                    img.src = result;
+                    return; // Exit early since img.onload will handle the rest
+                } else if (result.data && result.width && result.height) {
+                    // If it's a tensor-like object, convert to ImageData
+                    resultCanvas.width = result.width;
+                    resultCanvas.height = result.height;
+                    const imageData = new ImageData(result.data, result.width, result.height);
+                    resultCtx.putImageData(imageData, 0, 0);
+                } else {
+                    throw new Error(`Unsupported result type: ${typeof result}, constructor: ${result.constructor.name}`);
+                }
+                
+                const scale = result.width / canvas.width;
+                document.getElementById('integration-result').innerHTML = 
+                    `✅ UpscalerJS working!<br>Original: ${canvas.width}x${canvas.height}<br>Result: ${result.width}x${result.height}<br>Scale: ${scale.toFixed(2)}x`;
+                document.getElementById('integration-test').className = 'test pass';
+                
+                // Memory info
+                const memory = tf.memory();
+                console.log('Memory after test:', memory);
+                
+            } catch (error) {
+                console.error('Integration test failed:', error);
+                console.error('Error stack:', error.stack);
+                document.getElementById('integration-result').innerHTML = 
+                    `❌ Integration failed: ${error.message}<br><small>${error.stack ? error.stack.split('\n')[0] : ''}</small>`;
+                document.getElementById('integration-test').className = 'test fail';
+            }
+        }
+        
+        // Run tests when libraries are loaded
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 1000);
+        });
+    </script>
+</body>
+</html>

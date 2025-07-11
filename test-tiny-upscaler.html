@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiny UpscalerJS Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        button { padding: 10px 15px; margin: 5px; }
+        .status { padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Tiny UpscalerJS Test (64x64 → 256x256)</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="status" class="status">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Tiny Image Test</h2>
+        <button onclick="testTinyUpscale()">Test AI Upscale (Tiny Image)</button>
+        <div id="progress" style="margin: 10px 0;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Results</h2>
+        <div>
+            <h3>Original (64x64):</h3>
+            <canvas id="originalCanvas"></canvas>
+        </div>
+        <div>
+            <h3>Upscaled:</h3>
+            <canvas id="upscaledCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Load Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-medium@latest/dist/umd/4x.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+    
+    <script>
+        let upscaler = null;
+        
+        // Log function
+        function log(message) {
+            console.log(message);
+            const status = document.getElementById('status');
+            status.innerHTML += '<br>' + message;
+        }
+        
+        // Initialize
+        async function init() {
+            log('Testing UpscalerJS integration...');
+            
+            // Wait a bit for all scripts to load
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check TensorFlow.js
+            if (typeof tf !== 'undefined') {
+                log('✅ TensorFlow.js loaded: ' + tf.version);
+            } else {
+                log('❌ TensorFlow.js not loaded');
+                return;
+            }
+            
+            // Check UpscalerJS
+            if (typeof Upscaler !== 'undefined') {
+                log('✅ UpscalerJS loaded');
+                
+                // Check for model (4x ESRGAN Medium)
+                if (typeof ESRGANMedium4x !== 'undefined') {
+                    log('✅ ESRGAN Medium 4x model loaded');
+                    try {
+                        // Create UpscalerJS instance with ultra-conservative settings
+                        upscaler = new Upscaler({
+                            model: ESRGANMedium4x,
+                            patchSize: 16,
+                            padding: 1
+                        });
+                        log('✅ UpscalerJS instance created with ESRGAN Medium 4x model');
+                    } catch (error) {
+                        log('❌ Failed to create UpscalerJS instance: ' + error.message);
+                        console.error(error);
+                    }
+                } else {
+                    log('❌ ESRGAN Medium 4x model not loaded');
+                }
+            } else {
+                log('❌ UpscalerJS not loaded');
+            }
+        }
+        
+        // Create a tiny test image
+        function createTinyTestImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a colorful test pattern
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(0, 0, 32, 32);
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(32, 0, 32, 32);
+            ctx.fillStyle = '#0000ff';
+            ctx.fillRect(0, 32, 32, 32);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(32, 32, 32, 32);
+            
+            return canvas;
+        }
+        
+        // Test upscaling with tiny image
+        async function testTinyUpscale() {
+            if (!upscaler) {
+                log('❌ UpscalerJS not ready');
+                return;
+            }
+            
+            try {
+                log('📥 Creating tiny test image (64x64)...');
+                const originalCanvas = createTinyTestImage();
+                
+                // Display original
+                const originalDisplay = document.getElementById('originalCanvas');
+                originalDisplay.width = originalCanvas.width;
+                originalDisplay.height = originalCanvas.height;
+                originalDisplay.getContext('2d').drawImage(originalCanvas, 0, 0);
+                
+                log(`📏 Original size: ${originalCanvas.width}x${originalCanvas.height}`);
+                
+                // Create image element for UpscalerJS
+                log('🚀 Starting AI upscale...');
+                const img = new Image();
+                img.src = originalCanvas.toDataURL();
+                
+                await new Promise(resolve => {
+                    img.onload = resolve;
+                });
+                
+                // Upscale with UpscalerJS with progress callback
+                const result = await upscaler.upscale(img, {
+                    progressCallback: (progress) => {
+                        const percent = Math.round(progress * 100);
+                        log(`🔄 Upscaling progress: ${percent}%`);
+                    }
+                });
+                log('✅ UpscalerJS completed');
+                
+                // Convert result to canvas
+                let upscaledCanvas;
+                if (typeof result === 'string') {
+                    // Data URL result
+                    const upscaledImg = new Image();
+                    upscaledImg.src = result;
+                    await new Promise(resolve => {
+                        upscaledImg.onload = resolve;
+                    });
+                    
+                    upscaledCanvas = document.createElement('canvas');
+                    upscaledCanvas.width = upscaledImg.width;
+                    upscaledCanvas.height = upscaledImg.height;
+                    upscaledCanvas.getContext('2d').drawImage(upscaledImg, 0, 0);
+                } else if (result instanceof HTMLCanvasElement) {
+                    upscaledCanvas = result;
+                } else if (result instanceof HTMLImageElement) {
+                    upscaledCanvas = document.createElement('canvas');
+                    upscaledCanvas.width = result.width;
+                    upscaledCanvas.height = result.height;
+                    upscaledCanvas.getContext('2d').drawImage(result, 0, 0);
+                }
+                
+                // Display upscaled
+                const upscaledDisplay = document.getElementById('upscaledCanvas');
+                upscaledDisplay.width = upscaledCanvas.width;
+                upscaledDisplay.height = upscaledCanvas.height;
+                upscaledDisplay.getContext('2d').drawImage(upscaledCanvas, 0, 0);
+                
+                const scale = upscaledCanvas.width / originalCanvas.width;
+                log(`📏 Upscaled size: ${upscaledCanvas.width}x${upscaledCanvas.height}`);
+                log(`📈 Scale factor: ${scale.toFixed(1)}x`);
+                log('✅ Test completed successfully!');
+                
+            } catch (error) {
+                log('❌ Test failed: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

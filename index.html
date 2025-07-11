@@ -192,6 +192,11 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@latest/dist/umd/2x.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@latest/dist/umd/3x.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@latest/dist/umd/4x.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/upscaler@1.0.0-beta.19/dist/browser/umd/upscaler.min.js"></script>
     <script src="opencv.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/image-processor.js"></script>
@@ -250,8 +255,16 @@
                     updateStartupProgress(60, 'OpenCV.js not available...');
                 }
                 
-                updateStartupProgress(70, 'Libraries ready...');
-                updateStartupProgress(80, 'Canvas upscaler ready...');
+                // Check for UpscalerJS - wait a bit for it to load
+                setTimeout(() => {
+                    if (typeof Upscaler !== 'undefined') {
+                        updateStartupProgress(70, 'UpscalerJS ready...');
+                    } else {
+                        updateStartupProgress(70, 'UpscalerJS loading...');
+                    }
+                }, 500);
+                
+                updateStartupProgress(80, 'AI upscaler ready...');
                 
                 // Initialize app
                 updateStartupProgress(90, 'Initializing app...');
