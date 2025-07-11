@@ -64,7 +64,7 @@
     }
     
     /* Touch-friendly targets */
-    .btn, .slider, .corner-handle {
+    .btn, .corner-handle {
         min-height: 44px;
         min-width: 44px;
     }
