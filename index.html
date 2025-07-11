@@ -3,12 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Enhance iPhone Pro painting photographs for print-on-demand services">
-    <title>Painting Enhancement Tool</title>
+    <meta name="description" content="Enhance painting photographs for print-on-demand services using AI">
+    <title>Paint2Print - AI Photo Enhancement</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Paint2Print">
+    <link rel="apple-touch-icon" href="assets/icon-192.svg">
+    
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
+    <!-- App Banner -->
+    <div id="app-banner">
+        <div class="app-banner-content">
+            <h1 class="app-title">Paint2Print</h1>
+            <button id="install-btn" class="install-btn hidden">Install App</button>
+        </div>
+    </div>
+    
     <!-- Step Progress Indicator -->
     <header id="step-indicator">
         <div class="progress-bar">
@@ -75,7 +92,7 @@
     <section id="controls-panel">
         <!-- Step 1: Upload Controls -->
         <div id="controls-1" class="controls-container active">
-            <p class="control-description">Select a photo of your painting taken with iPhone Pro</p>
+            <p class="control-description">Select a photo of your painting</p>
         </div>
 
         <!-- Step 2: Grid Correction Controls -->
@@ -202,6 +219,7 @@
     <script src="js/image-processor.js"></script>
     <script src="js/upscaler.js"></script>
     <script src="js/ui-controller.js"></script>
+    <script src="js/pwa-install.js"></script>
     <script src="js/app.js"></script>
     <script>
         // Startup loading management

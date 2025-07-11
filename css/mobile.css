@@ -4,6 +4,24 @@
         font-size: 16px; /* Prevent zoom on focus */
     }
     
+    /* App Banner Mobile */
+    #app-banner {
+        padding: 0 16px;
+    }
+    
+    .app-banner-content {
+        height: 44px;
+    }
+    
+    .app-title {
+        font-size: 18px;
+    }
+    
+    .install-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
     /* Step 3 mobile layout adjustments - three columns */
     #controls-3 .control-row {
         gap: 4px; /* Smaller gap on mobile for three columns */

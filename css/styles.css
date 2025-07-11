@@ -15,6 +15,133 @@ body {
     line-height: 1.4;
 }
 
+/* App Banner */
+#app-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 100;
+}
+
+.app-banner-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.app-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.install-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.install-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-1px);
+}
+
+.install-btn:active {
+    transform: translateY(0);
+}
+
+.install-btn.hidden {
+    display: none;
+}
+
+/* PWA Update and Install Notifications */
+.update-banner, .install-success {
+    position: fixed;
+    top: 20px; /* Adjust based on app banner visibility */
+    left: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+/* When app banner is visible, position below it */
+#app-banner:not([style*="display: none"]) ~ * .update-banner,
+#app-banner:not([style*="display: none"]) ~ * .install-success {
+    top: 60px;
+}
+
+.update-content, .success-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.update-btn {
+    background: #007AFF;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.update-btn:hover {
+    background: #0056CC;
+}
+
+.update-dismiss, .success-dismiss {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.update-dismiss:hover, .success-dismiss:hover {
+    opacity: 1;
+}
+
+.install-success {
+    background: rgba(52, 199, 89, 0.9);
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* Step Progress */
 #step-indicator {
     background: white;
@@ -678,5 +805,99 @@ input[type="checkbox"] {
     
     #navigation {
         padding: 12px;
+    }
+}
+
+/* Desktop PWA Optimizations */
+@media (min-width: 1024px) and (display-mode: standalone) {
+    /* Optimize for 1200x900 PWA window */
+    body {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #f0f0f0;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    
+    .app-banner-content {
+        padding: 0 40px;
+    }
+    
+    #main-content {
+        padding: 40px;
+    }
+    
+    #step-indicator {
+        padding: 20px 40px;
+    }
+    
+    #controls-panel {
+        padding: 20px 40px;
+    }
+    
+    #navigation {
+        padding: 20px 40px;
+    }
+    
+    /* Larger touch targets for desktop */
+    .btn {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+    
+    .corner-handle {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Better canvas sizing for desktop */
+    #image-canvas, .step-canvas {
+        max-width: 800px;
+        max-height: 600px;
+    }
+    
+    /* Enhanced desktop controls */
+    #controls-3 .control-third {
+        min-width: 200px;
+    }
+    
+    .size-selector.inline-select {
+        min-width: 300px;
+    }
+}
+
+/* General desktop optimizations */
+@media (min-width: 768px) {
+    /* Hover effects for desktop */
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .corner-handle:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    
+    /* Better spacing on larger screens */
+    .control-group {
+        margin-bottom: 24px;
+    }
+    
+    .step-text {
+        font-size: 18px;
+    }
+    
+    .app-title {
+        font-size: 22px;
+    }
+    
+    /* Keyboard navigation support */
+    .btn:focus-visible {
+        outline: 2px solid #007AFF;
+        outline-offset: 2px;
+    }
+    
+    .slider:focus-visible {
+        outline: 2px solid #007AFF;
+        outline-offset: 2px;
     }
 }
